@@ -7,22 +7,24 @@ module-starter - Creates a skeleton module distribution
 =cut
 
 use strict;
-use Module::Starter;
 use Getopt::Long;
 use Pod::Usage;
 
+my $class = 'Module::Starter';
+my @plugins;
 my @modules;
 my $distro;
 my $dir;
 my @builders;
-my $class = 'Module::Starter';
 my ($author, $email, $license, $force, $verbose);
 
 GetOptions(
-    "class=s"   =>   \$class,
-    "dir=s"     =>   \$dir,
-    "distro=s"  =>   \$distro,
-    "module=s"  =>   \@modules,
+    "class=s"   =>  \$class,
+    "plugin=s"  =>  \@plugins,
+
+    "dir=s"     =>  \$dir,
+    "distro=s"  =>  \$distro,
+    "module=s"  =>  \@modules,
     "builder=s" =>  \@builders,
     eumm =>         sub { push @builders, "ExtUtils::MakeMaker" },
     mb   =>         sub { push @builders, "Module::Build" },
@@ -39,7 +41,8 @@ GetOptions(
 @builders = ('ExtUtils::MakeMaker') unless @builders;
 
 eval "require $class;";
-die "invalid starter class $class" if $@;
+die "invalid starter class $class: $@" if $@;
+$class->import(@plugins);
 
 $class->create_distro(
     dir     => $dir,
@@ -89,7 +92,9 @@ Example:
 
 C<module-starter> is a command-line interface to L<Module::Starter>, which it
 uses to perform all the work of creating distributions.  An alternate backend
-for C<module-starter> can be specified with the C<--class> option.
+for C<module-starter> can be specified with the C<--class> option.  Plugins to
+the standard Module::Starter module can be specified with one or more
+C<--plugin> options.
 
 If no directory name is supplied, the distribution name will be used for the
 directory.  If no distribution name is supplied, the first listed module name

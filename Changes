@@ -1,5 +1,14 @@
 Revision history for Perl extension Module::Starter
 
+1.25_01 # to become 1.40
+        [ENHANCEMENTS]
+        * Module::Starter is now merely a public interface to plugins
+        * Module::Starter::Simple, the old M::S is now a plugin
+        * Module::Starter::Plugin::Template added
+        * The t/pod.t and t/pod-coverage.t files now use tainting,
+          and require the appropriate versions of Test::Pod and
+          Test::Pod::Coverage, respectively.
+
 1.22    Mon Jul 12 17:05:26 CDT 2004
 
         [FIXES]

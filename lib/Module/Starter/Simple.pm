@@ -1,5 +1,5 @@
+package Module::Starter::Simple;
 # vi:et:sw=4 ts=4
-package Module::Starter;
 
 use strict;
 
@@ -8,61 +8,43 @@ use File::Spec;
 
 =head1 NAME
 
-Module::Starter - Starter kit for any module
+Module::Starter::Simple - a simple, comprehensive Module::Starter plugin
 
-=head1 Version
+=head1 VERSION
 
 Version 1.22
 
-    $Header: /home/cvs/module-starter/Starter.pm,v 1.41 2004/07/12 22:05:59 rjbs Exp $
+    $Header: /home/cvs/module-starter/lib/Module/Starter/Simple.pm,v 1.4 2004/07/21 22:50:32 rjbs Exp $
 
 =cut
 
 our $VERSION = '1.22';
 
-=head1 Synopsis
+=head1 SYNOPSIS
 
-Nothing in here is meant for public consumption.  Use F<module-starter>
-from the command line.
+ use Module::Starter qw(Module::Starter::Simple);
 
-    module-starter --module=Foo::Bar,Foo::Bat \
-        --author="Andy Lester" --email=andy@petdance.com
+ Module::Starter->create_distro(%args);
 
+=head1 DESCRIPTION
 
-=head1 Public Methods
+Module::Starter::Simple is a plugin for Module::Starter that will perform all
+the work needed to create a distribution.  Given the parameters detailed in
+L<Module::Starter>, it will create content, create directories, and populate
+the directories with the required files.
 
-=head2 Module::Starter->create_distro(%args)
+=head1 CLASS METHODS
 
-C<create_distro> is the only method you should need to use from outside this
-module; all the other methods are called internally by this one.
+=head2 C<< create_distro(%args) >>
 
-This method creates orchestrates all the work; it creates distribution and
-populates it with the all the requires files.
-
-It takes a hash of params, as follows:
-
-    distro  => $distroname,      # distribution name (defaults to first module)
-    modules => [ module names ], # modules to create in distro
-    dir     => $dirname,         # directory in which to build distro
-    builder => 'Module::Build',  # defaults to ExtUtils::MakeMaker
-                                 # or specify more than one builder in an
-                                 # arrayref
-
-    license => $license,  # type of license; defaults to 'perl'
-    author  => $author,   # author's full name (required)
-    email   => $email,    # author's email address (required)
-
-    verbose => $verbose,  # bool: print progress messages; defaults to 0
-    force   => $force     # bool: overwrite existing files; defaults to 0
+This method works as advertised in L<Module::Starter>.
 
 =cut
-
-sub _new { my $class = shift; bless { @_ } => $class; }
 
 sub create_distro {
     my $class = shift;
 
-    my $self = $class->_new( @_ );
+    my $self = $class->new( @_ );
 
     my $modules = $self->{modules} || [];
     my @modules = map { split /,/ } @$modules;
@@ -123,7 +105,18 @@ HERE
     $self->create_MANIFEST( @files );
 }
 
-=head1 Private Methods
+=head2 C<< new(%args) >>
+
+This method is called to construct and initialize a new Module::Starter object.
+It is never called by the end user, only internally by C<create_distro>, which
+creates ephemeral Module::Starter objects.  It's documented only to call it to
+the attention of subclass authors.
+
+=cut
+
+sub new { my $class = shift; bless { @_ } => $class; }
+
+=head1 OBJECT METHODS
 
 All the methods documented below are object methods, meant to be called
 internally by the ephemperal objects created during the execution of the class
@@ -563,16 +556,20 @@ sub t_guts {
     my %t_files;
 
     $t_files{'pod.t'} = <<'HERE';
+#!perl -T
+
 use Test::More;
-eval "use Test::Pod 1.00";
-plan skip_all => "Test::Pod 1.00 required for testing POD" if $@;
+eval "use Test::Pod 1.14";
+plan skip_all => "Test::Pod 1.14 required for testing POD" if $@;
 all_pod_files_ok();
 HERE
 
     $t_files{'pod-coverage.t'} = <<'HERE';
+#!perl -T
+
 use Test::More;
-eval "use Test::Pod::Coverage 0.08";
-plan skip_all => "Test::Pod::Coverage 0.08 required for testing POD coverage" if $@;
+eval "use Test::Pod::Coverage 1.04";
+plan skip_all => "Test::Pod::Coverage 1.04 required for testing POD coverage" if $@;
 all_pod_coverage_ok();
 HERE
 
