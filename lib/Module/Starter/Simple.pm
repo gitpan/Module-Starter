@@ -12,13 +12,13 @@ Module::Starter::Simple - a simple, comprehensive Module::Starter plugin
 
 =head1 VERSION
 
-Version 1.36
+Version 1.38
 
-    $Header: /home/cvs/module-starter/lib/Module/Starter/Simple.pm,v 1.9 2004/08/23 02:38:57 rjbs Exp $
+    $Id: Simple.pm 18 2005-03-17 02:29:55Z rjbs $
 
 =cut
 
-our $VERSION = '1.36';
+our $VERSION = '1.38';
 
 =head1 SYNOPSIS
 
@@ -49,6 +49,9 @@ sub create_distro {
     my $modules = $self->{modules} || [];
     my @modules = map { split /,/ } @$modules;
     die "No modules specified.\n" unless @modules;
+    for (@modules) {
+        die "Invalid module name: $_" unless /\A[a-z_]\w*(?:::[\w]+)*\Z/i;
+    }
 
     die "Must specify an author\n" unless $self->{author};
     die "Must specify an email address\n" unless $self->{email};

@@ -1,5 +1,9 @@
 Revision history for Perl extension Module::Starter
 
+1.38    Wed Mar 16 20:28:00 CST 2005
+        [FIXES]
+        * don't allow invalid module names
+
 1.36    Mon Mar  7 08:38:00	CST 2005
         [FIXES]
         * 00.load.t is now 00-load.t, so VMS and RiscOS folks can use it.

@@ -1,14 +1,22 @@
 package Module::Starter::Plugin::Template;
 # vi:et:sw=4 ts=4
 
-our $VERSION = '0.01';
-
 use warnings;
 use strict;
 
 =head1 NAME
 
 Module::Starter::Plugin::Template - module starter with templates
+
+=head1 VERSION
+
+Version 0.02
+
+    $Id: Template.pm 17 2005-03-08 18:24:35Z rjbs $
+
+=cut
+
+our $VERSION = '0.02';
 
 =head1 SYNOPSIS
 
