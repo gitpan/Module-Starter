@@ -1,5 +1,15 @@
 Revision history for Perl extension Module::Starter
 
+0.06    Fri Jun 25 17:57:31 CDT 2004
+
+        [ENHANCEMENTS]
+        * Added a README file.  The README file is somewhat intelligently
+          constructed, too.
+        * Now you can specify both EU::MM and M::B as your builders,
+          so the module can have a double life.
+
+        Thanks to Sébastien Aperghis-Tramonifor the help.
+
 0.04    Mon Apr  5 20:45:58 CDT 2004
 
         [ENHANCEMENTS]

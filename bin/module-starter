@@ -14,15 +14,14 @@ use Pod::Usage;
 my @modules;
 my $distro;
 my $dir;
-
-my $builder = 'ExtUtils::MakeMaker';
+my @builders;
 
 GetOptions(
     "distro=s" =>   \$distro,
     "module=s" =>   \@modules,
-    "builder=s" =>  \$builder,
-    eumm =>         sub { $builder = "ExtUtils::MakeMaker" },
-    mb =>           sub { $builder = "Module::Build" },
+    "builder=s" =>  \@builders,
+    eumm =>         sub { push @builders, "ExtUtils::MakeMaker" },
+    mb =>           sub { push @builders, "Module::Build" },
 
     "author=s" =>   \$Module::Starter::author,
     "email=s" =>    \$Module::Starter::email,
@@ -31,15 +30,14 @@ GetOptions(
     verbose =>      \$Module::Starter::verbose,
     version =>      sub { print "module-starter v$Module::Starter::VERSION\n"; exit 1; },
     help =>         sub { pod2usage(1); },
-) or pod2usage(2); 
+) or pod2usage(2);
 
-pod2usage(2) unless ( $builder eq 'ExtUtils::MakeMaker' ||
-                      $builder eq 'Module::Build' );
+@builders = ('ExtUtils::MakeMaker') unless @builders;
 
 create_distro(
     distro  => $distro,
     modules => [@modules],
-    builder => $builder,
+    builder => [@builders],
 );
 
 print "Created starter directories and files\n";
@@ -58,6 +56,8 @@ Options:
     --builder=module Build with 'ExtUtils::MakeMaker' or 'Module::Build'
     --eumm           Same as --build=ExtUtils::MakeMaker
     --mb             Same as --build=Module::Build
+
+    The builder options may be repeated to create files for multiple builders.
 
     --author=name    Author's name (required)
     --email=email    Author's email (required)

@@ -17,13 +17,13 @@ Module::Starter - Starter kit for any module
 
 =head1 Version
 
-Version 0.04
+Version 1.00
 
-    $Header: /home/cvs/module-starter/Starter.pm,v 1.22 2004/04/06 01:52:07 andy Exp $
+    $Header: /home/cvs/module-starter/Starter.pm,v 1.28 2004/06/25 23:00:02 andy Exp $
 
 =cut
 
-our $VERSION = '0.04';
+our $VERSION = '1.00';
 
 =head1 Synopsis
 
@@ -67,6 +67,8 @@ Takes a hash of parms:
     modules => [ module names ],
     distro => $distroname,
     builder => 'Module::Build', # Defaults to ExtUtils::MakeMaker
+    # or specify more than one builder
+    builder => [ 'Module::Build', 'ExtUtils::MakeMaker' ],
 
 =cut
 
@@ -95,13 +97,38 @@ sub create_distro {
     push @files, create_t( $basedir, @modules );
     push @files, create_cvsignore( $basedir, $distro );
 
-    if ( $args{builder} eq 'Module::Build' ) {
-        push @files, create_Build_PL( $basedir, $distro, $modules[0] );
-    } else {
-        push @files, create_Makefile_PL( $basedir, $distro, $modules[0] );
+    my @builders = (ref $args{builder} eq "ARRAY") ? @{$args{builder}} : ($args{builder});
+
+    my @build_instructions;
+    for my $builder ( @builders ) {
+        if ( !@build_instructions ) {
+            push @build_instructions, "To install this module, run the following commands:";
+        } else {
+            push @build_instructions, "Alternatively, to install with $builder, you can use the following commands:";
+        }
+        if ( $builder eq 'Module::Build' ) {
+            push @files, create_Build_PL( $basedir, $distro, $modules[0] );
+            push @build_instructions, <<'HERE';
+    perl Build.PL
+    ./Build
+    ./Build test
+    ./Build install
+HERE
+        } else {
+            push @files, create_Makefile_PL( $basedir, $distro, $modules[0] );
+            push @build_instructions, <<'HERE';
+    perl Makefile.PL
+    make
+    make test
+    make install
+HERE
+        }
     }
 
+    my $build_instructions = join( "\n\n", @build_instructions );
+
     push @files, create_Changes( $basedir, $distro );
+    push @files, create_README( $basedir, $distro, $author, $build_instructions );
     push @files, "MANIFEST";
     push @files, 'META.yml # Will be created by "make dist"';
     create_MANIFEST( $basedir, @files );
@@ -186,13 +213,15 @@ sub _create_module {
     return $manifest_file;
 }
 
+sub _thisyear { (localtime())[5] + 1900 }
+
 sub _module_guts {
     my $module = shift;
 
     my $rtname = lc $module;
     $rtname =~ s/::/-/g;
 
-    my $year = (localtime())[5] + 1900;
+    my $year = _thisyear();
 
     return <<"HERE";
 package $module;
@@ -296,6 +325,7 @@ WriteMakefile(
     AUTHOR              => '$author <$email>',
     VERSION_FROM        => '$main_pm_file',
     ABSTRACT_FROM       => '$main_pm_file',
+    PL_FILES            => {},
     PREREQ_PM => {
         'Test::More' => 0,
     },
@@ -379,6 +409,58 @@ HERE
 
     return "Changes";
 }
+
+=head2 create_README( $basedir, $distro )
+
+Creates a skeleton README file.
+
+=cut
+
+sub create_README {
+    my $basedir = shift;
+    my $distro = shift;
+    my $author = shift;
+    my $build_instructions = shift;
+
+    my $year = _thisyear();
+
+    my $fname = File::Spec->catfile( $basedir, "README" );
+    open( my $fh, ">", $fname ) or die "Can't create $fname: $!\n";
+
+print $fh <<"HERE";
+$distro
+
+The README is used to introduce the module and provide instructions on
+how to install the module, any machine dependencies it may have (for
+example C compilers and installed libraries) and any other information
+that should be provided before the module is installed.
+
+A README file is required for CPAN modules since CPAN extracts the README
+file from a module distribution so that people browsing the archive
+can use it get an idea of the modules uses. It is usually a good idea
+to provide version information here so that people can decide whether
+fixes for the module are worth downloading.
+
+INSTALLATION
+
+$build_instructions
+
+COPYRIGHT AND LICENCE
+
+Put the correct copyright and licence information here.
+
+Copyright (C) $year $author
+
+This library is free software; you can redistribute it and/or modify
+it under the same terms as Perl itself.
+HERE
+
+    close $fh;
+    print "Created $fname\n" if $verbose;
+
+    return "README";
+}
+
 
 =head2 create_t( $basedir, @modules )
 
