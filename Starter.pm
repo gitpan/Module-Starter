@@ -17,13 +17,13 @@ Module::Starter - Starter kit for any module
 
 =head1 Version
 
-Version 0.02
+Version 0.04
 
-    $Header: /home/cvs/module-starter/Starter.pm,v 1.18 2004/04/05 03:32:12 andy Exp $
+    $Header: /home/cvs/module-starter/Starter.pm,v 1.22 2004/04/06 01:52:07 andy Exp $
 
 =cut
 
-our $VERSION = '0.02';
+our $VERSION = '0.04';
 
 =head1 Synopsis
 
@@ -45,14 +45,17 @@ from the command line.
 
 =item * $email
 
+=item * $license
+
 =back
 
 =cut
 
 our $verbose = 0;
 our $force = 0;
-our $author = "Module Author";
-our $email = "i-have-no-email\@example.com";
+our $license = 'perl';
+our $author;
+our $email;
 
 =head1 Functions
 
@@ -63,6 +66,7 @@ Takes a hash of parms:
     dir => $dirname,
     modules => [ module names ],
     distro => $distroname,
+    builder => 'Module::Build', # Defaults to ExtUtils::MakeMaker
 
 =cut
 
@@ -70,14 +74,11 @@ sub create_distro {
     my %args = @_;
 
     my $modules = $args{modules} || [];
-    my @modules = @$modules;
+    my @modules = map { split /,/ } @$modules;
     die "No modules specified.\n" unless @modules;
-
-    @modules = map { split /,/ } @modules;
 
     die "Must specify an author\n" unless $author;
     die "Must specify an email address\n" unless $email;
-
 
     my $distro = $args{distro};
     if ( not defined $distro ) {
@@ -93,7 +94,13 @@ sub create_distro {
 
     push @files, create_t( $basedir, @modules );
     push @files, create_cvsignore( $basedir, $distro );
-    push @files, create_Makefile_PL( $basedir, $distro, $modules[0] );
+
+    if ( $args{builder} eq 'Module::Build' ) {
+        push @files, create_Build_PL( $basedir, $distro, $modules[0] );
+    } else {
+        push @files, create_Makefile_PL( $basedir, $distro, $modules[0] );
+    }
+
     push @files, create_Changes( $basedir, $distro );
     push @files, "MANIFEST";
     push @files, 'META.yml # Will be created by "make dist"';
@@ -172,7 +179,7 @@ sub _create_module {
     my $module_file = File::Spec->catfile( @dirparts,  $filepart );
 
     open( my $fh, ">", $module_file ) or die "Can't create $module_file: $!\n";
-    print $fh _module_guts( $module );
+    print $fh &_module_guts( $module );
     close $fh;
     print "Created $module_file\n" if $verbose;
 
@@ -303,6 +310,49 @@ HERE
     return "Makefile.PL";
 }
 
+=head2 create_Build_PL( $basedir, $distro, $main_module )
+
+Creates a Build.PL for the given module distro.
+
+=cut
+
+sub create_Build_PL {
+    my $basedir = shift;
+    my $distro = shift;
+    my $main_module = shift;
+
+    my @parts = split( /::/, $main_module );
+    my $pm = pop @parts;
+    my $main_pm_file = File::Spec->catfile( "lib", @parts, "${pm}.pm" );
+
+    my $fname = File::Spec->catfile( $basedir, "Build.PL" );
+    open( my $fh, ">", $fname ) or die "Can't create $fname: $!\n";
+
+print $fh <<"HERE";
+use strict;
+use warnings;
+use Module::Build;
+
+my \$builder = Module::Build->new(
+    module_name         => '$main_module',
+    license             => '$license',
+    dist_author         => '$author <$email>',
+    dist_version_from   => '$main_pm_file',
+    requires => {
+        'Test::More' => 0,
+    },
+    add_to_cleanup      => [ '$distro-*' ],
+);
+
+\$builder->create_build_script();
+HERE
+
+    close $fh;
+    print "Created $fname\n" if $verbose;
+
+    return "Build.PL";
+}
+
 =head2 create_Changes( $basedir, $distro )
 
 Creates a skeleton Changes file.
@@ -411,6 +461,10 @@ sub create_MANIFEST {
     open( my $fh, ">", $fname ) or die "Can't create $fname: $!\n";
     print $fh map { "$_\n" } @files;
     close $fh;
+
+    print "Created $fname\n" if $verbose;
+
+    return "MANIFEST";
 }
 
 =head2 create_cvsignore( $basedir, $distro )
@@ -448,7 +502,7 @@ HERE
 =head1 Bugs
 
 Please report any bugs or feature requests to
-C<bug-test-html-tidy@rt.cpan.org>, or through the web interface at
+C<bug-module-starter@rt.cpan.org>, or through the web interface at
 L<http://rt.cpan.org>.  I will be notified, and then you'll automatically
 be notified of progress on your bug as I make changes.
 

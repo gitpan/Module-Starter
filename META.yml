@@ -1,12 +1,15 @@
 # http://module-build.sourceforge.net/META-spec.html
 #XXXXXXX This is a prototype!!!  It will change in the future!!! XXXXX#
 name:         Module-Starter
-version:      0.02
+version:      0.04
 version_from: Starter.pm
 installdirs:  site
 requires:
+    Exporter:                      0
     ExtUtils::Command:             0
     File::Spec:                    0
+    Getopt::Long:                  0
+    Pod::Usage:                    0
     Test::More:                    0
 
 distribution_type: module

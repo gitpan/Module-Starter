@@ -1,6 +1,12 @@
 Revision history for Perl extension Module::Starter
 
+0.04    Mon Apr  5 20:45:58 CDT 2004
 
-1.00    Thu Feb 26 00:11:57 CST 2004
+        [ENHANCEMENTS]
+
+        * Added support for Module::Build.  Thanks, Randy Sims.
+
+
+0.02    Thu Feb 26 00:11:57 CST 2004
 
         First real version, released on an unsuspecting world.
