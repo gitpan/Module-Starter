@@ -1,9 +1,7 @@
 package Module::Starter;
 # vi:et:sw=4 ts=4
 
-our $VERSION = '1.25_01';
-
-use UNIVERSAL::require;
+our $VERSION = '1.25_02';
 
 use warnings;
 use strict;
@@ -77,7 +75,11 @@ sub import {
 
     no strict 'refs';
     for (@plugins, $class) {
-        if ($parent) { $parent->require; push @{"${_}::ISA"}, $parent; }
+        if ($parent) {
+            eval "require $parent;"; 
+            die "couldn't load plugin $parent: $@" if $@;
+            push @{"${_}::ISA"}, $parent;
+        }
         $parent = $_;
     }
 }

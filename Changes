@@ -1,6 +1,9 @@
 Revision history for Perl extension Module::Starter
 
-1.25_01 # to become 1.40
+1.25_02 # to become 1.40
+        * removed need for UNIVERSAL::require
+
+1.25_01
         [ENHANCEMENTS]
         * Module::Starter is now merely a public interface to plugins
         * Module::Starter::Simple, the old M::S is now a plugin

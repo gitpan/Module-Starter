@@ -16,7 +16,6 @@ WriteMakefile(
         'File::Spec'            => 0,
         'Getopt::Long'          => 0,
         'Pod::Usage'            => 0,
-        'UNIVERSAL::require'    => 0,
     },
     dist                => { COMPRESS => 'gzip -9f', SUFFIX => 'gz', },
     clean               => { FILES => 'Module-Release-*' },
