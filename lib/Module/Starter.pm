@@ -1,7 +1,7 @@
 package Module::Starter;
 # vi:et:sw=4 ts=4
 
-our $VERSION = '1.30';
+our $VERSION = '1.34';
 
 use warnings;
 use strict;
@@ -12,9 +12,9 @@ Module::Starter - a simple starter kit for any module
 
 =head1 VERSION
 
-Version 1.30
+Version 1.34
 
-    $Header: /home/cvs/module-starter/lib/Module/Starter.pm,v 1.6 2004/08/16 19:03:05 rjbs Exp $
+    $Header: /home/cvs/module-starter/lib/Module/Starter.pm,v 1.9 2004/09/21 01:36:37 rjbs Exp $
 
 =head1 SYNOPSIS
 

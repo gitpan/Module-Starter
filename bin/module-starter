@@ -2,7 +2,7 @@
 
 =head1 NAME
 
-module-starter - Creates a skeleton module distribution
+module-starter - creates a skeleton module distribution
 
 =cut
 
@@ -10,53 +10,61 @@ use strict;
 use Getopt::Long;
 use Pod::Usage;
 
-my $class = 'Module::Starter';
-my @plugins;
-my @modules;
-my $distro;
-my $dir;
-my @builders;
-my ($author, $email, $license, $force, $verbose);
+sub config_read {
+	my $filename = shift;
+
+	return unless -e $filename;
+
+	open my $config_file, '<', $filename
+		or die "couldn't open config file $filename: $!";
+	
+	my %config;
+	while (<$config_file>) { 
+		chomp;
+		next if /\A\s*\Z/sm;
+		if (/\A(\w+):\s*(.+)\Z/sm) { $config{$1} = $2; }
+	}
+	return %config;
+}
+
+my $configdir = $ENV{MODULE_STARTER_DIR} || ($ENV{HOME} . '/.module-starter');
+
+my %config    = config_read( "$configdir/config" );
+
+$config{plugins}    = [ split /(?:\s*,\s*|\s+)/, $config{plugins} || '' ];
+$config{builder}    = [ split /(?:\s*,\s*|\s+)/, $config{builder} || '' ];
 
 pod2usage(2) unless @ARGV;
 
 GetOptions(
-    "class=s"   =>  \$class,
-    "plugin=s"  =>  \@plugins,
+    "class=s"   =>  \$config{class},
+    "plugin=s"  =>   ($config{plugins} ||= []),
 
-    "dir=s"     =>  \$dir,
-    "distro=s"  =>  \$distro,
-    "module=s"  =>  \@modules,
-    "builder=s" =>  \@builders,
-    eumm =>         sub { push @builders, "ExtUtils::MakeMaker" },
-    mb   =>         sub { push @builders, "Module::Build" },
+    "dir=s"     =>  \$config{dir},
+    "distro=s"  =>  \$config{distro},
+    "module=s"  =>   ($config{modules} ||= []),
+    "builder=s" =>   ($config{builder} ||= []),
+    eumm =>         sub { push @{$config{builder}}, "ExtUtils::MakeMaker" },
+    mb   =>         sub { push @{$config{builder}}, "Module::Build" },
 
-    "author=s"  =>  \$author,
-    "email=s"   =>  \$email,
-    "license=s" =>  \$license,
-    force   =>      \$force,
-    verbose =>      \$verbose,
+    "author=s"  =>  \$config{author},
+    "email=s"   =>  \$config{email},
+    "license=s" =>  \$config{license},
+    force   =>      \$config{force},
+    verbose =>      \$config{verbose},
     version =>      sub { print "module-starter v$Module::Starter::VERSION\n"; exit 1; },
-    help =>         sub { pod2usage(1); },
+    help    =>         sub { pod2usage(1); },
 ) or pod2usage(2);
 
-@builders = ('ExtUtils::MakeMaker') unless @builders;
+$config{class} ||= 'Module::Starter';
 
-eval "require $class;";
-die "invalid starter class $class: $@" if $@;
-$class->import(@plugins);
+$config{builder} = ['ExtUtils::MakeMaker'] unless @{$config{builder}};
 
-$class->create_distro(
-    dir     => $dir,
-    distro  => $distro,
-    modules => [@modules],
-    builder => [@builders],
-    author  => $author,
-    email   => $email,
-    license => $license,
-    force   => $force,
-    verbose => $verbose,
-);
+eval "require $config{class};";
+die "invalid starter class $config{class}: $@" if $@;
+$config{class}->import(@{$config{plugins}});
+
+$config{class}->create_distro( %config );
 
 print "Created starter directories and files\n";
 
@@ -104,6 +112,25 @@ will be used as the distribution name.
 
 Multiple --builder options may be supplied to produce the files for multiple
 builders.
+
+=head1 CONFIGURATION
+
+module-starter will look for a configuration file before reading its command
+line parameters.  The default location is C<$HOME/.module-starter/config> but
+if the MODULE_STARTER_DIR environment variable is set, module-starter will look
+for C<config> in that directory.
+
+The configuration file is just a list of names and values, separated by colons.
+Values that take lists are just space separated.  A sample configuration file
+might read:
+
+ author: Ricardo SIGNES
+ email:  rjbs@cpan.org
+ plugins: Module::Starter::Simple Module::Starter::Plugin::XYZ
+ xyz_option: red green blue
+
+This format may become more elaborate in the future, but a file of this type
+should remain valid.
 
 =cut
 

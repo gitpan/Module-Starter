@@ -12,13 +12,13 @@ Module::Starter::Simple - a simple, comprehensive Module::Starter plugin
 
 =head1 VERSION
 
-Version 1.30
+Version 1.31_01
 
-    $Header: /home/cvs/module-starter/lib/Module/Starter/Simple.pm,v 1.6 2004/08/16 19:03:16 rjbs Exp $
+    $Header: /home/cvs/module-starter/lib/Module/Starter/Simple.pm,v 1.9 2004/08/23 02:38:57 rjbs Exp $
 
 =cut
 
-our $VERSION = '1.30';
+our $VERSION = '1.31_01';
 
 =head1 SYNOPSIS
 
@@ -53,6 +53,8 @@ sub create_distro {
     die "Must specify an author\n" unless $self->{author};
     die "Must specify an email address\n" unless $self->{email};
 
+    $self->{license} ||= 'perl';
+
     if ( not defined $self->{distro} ) {
         $self->{distro} = $modules[0];
         $self->{distro} =~ s/::/-/g;
@@ -67,11 +69,14 @@ sub create_distro {
     push @files, $self->create_t( @modules );
     push @files, $self->create_cvsignore;
 
-    my @builders = (ref $self->{builder} eq "ARRAY") ?  @{$self->{builder}} : ($self->{builder});
+    my @builders = (ref $self->{builder} eq "ARRAY")
+        ? @{$self->{builder}}
+        : ($self->{builder});
 
     # this block should be pulled out to its own sub
     my @build_instructions;
     for my $builder ( @builders ) {
+        next unless $builder;
         if ( !@build_instructions ) {
             push @build_instructions, "To install this module, run the following commands:";
         } else {
@@ -266,7 +271,6 @@ under the same terms as Perl itself.
 
 1; # End of $module
 HERE
-    $content =~ s/^\\=/=/smg;
     return $content;
 }
 
