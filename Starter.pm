@@ -2,14 +2,12 @@ package Module::Starter;
 
 use strict;
 
-use Exporter;
 use ExtUtils::Command qw( rm_rf mkpath touch );
 use File::Spec;
 
-use vars qw( @ISA @EXPORT );
+use vars qw( @ISA );
 
 @ISA = qw( Exporter );
-@EXPORT = qw( create_distro );
 
 =head1 NAME
 
@@ -17,13 +15,13 @@ Module::Starter - Starter kit for any module
 
 =head1 Version
 
-Version 1.00
+Version 1.01_01
 
-    $Header: /home/cvs/module-starter/Starter.pm,v 1.28 2004/06/25 23:00:02 andy Exp $
+    $Header: /home/cvs/module-starter/Starter.pm,v 1.30 2004/07/10 02:43:09 andy Exp $
 
 =cut
 
-our $VERSION = '1.00';
+our $VERSION = '1.01_01';
 
 =head1 Synopsis
 
@@ -33,71 +31,57 @@ from the command line.
     module-starter --module=Foo::Bar,Foo::Bat \
         --author="Andy Lester" --email=andy@petdance.com
 
-=head1 Package variables
 
-=over 4
-
-=item * $verbose
-
-=item * $force
-
-=item * $author
-
-=item * $email
-
-=item * $license
-
-=back
-
-=cut
-
-our $verbose = 0;
-our $force = 0;
-our $license = 'perl';
-our $author;
-our $email;
-
-=head1 Functions
+=head1 Methods
 
 =head2 create_distro()
 
 Takes a hash of parms:
 
-    dir => $dirname,
+    dir     => $dirname,
     modules => [ module names ],
-    distro => $distroname,
+    distro  => $distroname,
     builder => 'Module::Build', # Defaults to ExtUtils::MakeMaker
-    # or specify more than one builder
+                                # or specify more than one builder
     builder => [ 'Module::Build', 'ExtUtils::MakeMaker' ],
+    license => $license_type,   # defaults to 'perl'
+    author  => $author, 
+    email   => $email,
+
+    verbose => $verbose,  # boolean; defaults to 0
+    force   => $force     # boolean; defaults to 0
 
 =cut
 
 sub create_distro {
-    my %args = @_;
+    my $class = shift;
 
-    my $modules = $args{modules} || [];
+    my $self = { @_ };
+    bless $self, $class;
+
+    my $modules = $self->{modules} || [];
     my @modules = map { split /,/ } @$modules;
     die "No modules specified.\n" unless @modules;
 
-    die "Must specify an author\n" unless $author;
-    die "Must specify an email address\n" unless $email;
+    die "Must specify an author\n" unless $self->{author};
+    die "Must specify an email address\n" unless $self->{email};
 
-    my $distro = $args{distro};
+    my $distro = $self->{distro};
     if ( not defined $distro ) {
         $distro = $modules[0];
         $distro =~ s/::/-/g;
     }
 
-    my $basedir = $args{dir} || $distro;
-    create_directory( $basedir, $force );
+    my $basedir = $self->{dir} || $distro;
+    $self->create_directory( $basedir, $self->{force} );
 
     my @files;
-    push @files, create_modules( $basedir, @modules );
+    push @files, $self->create_modules( $basedir, @modules );
 
-    push @files, create_t( $basedir, @modules );
-    push @files, create_cvsignore( $basedir, $distro );
+    push @files, $self->create_t( $basedir, @modules );
+    push @files, $self->create_cvsignore( $basedir, $distro );
 
-    my @builders = (ref $args{builder} eq "ARRAY") ? @{$args{builder}} : ($args{builder});
+    my @builders = (ref $self->{builder} eq "ARRAY") ?  @{$self->{builder}} : ($self->{builder});
 
     my @build_instructions;
     for my $builder ( @builders ) {
@@ -107,7 +91,7 @@ sub create_distro {
             push @build_instructions, "Alternatively, to install with $builder, you can use the following commands:";
         }
         if ( $builder eq 'Module::Build' ) {
-            push @files, create_Build_PL( $basedir, $distro, $modules[0] );
+            push @files, $self->create_Build_PL( $basedir, $distro, $modules[0] );
             push @build_instructions, <<'HERE';
     perl Build.PL
     ./Build
@@ -115,7 +99,7 @@ sub create_distro {
     ./Build install
 HERE
         } else {
-            push @files, create_Makefile_PL( $basedir, $distro, $modules[0] );
+            push @files, $self->create_Makefile_PL( $basedir, $distro, $modules[0] );
             push @build_instructions, <<'HERE';
     perl Makefile.PL
     make
@@ -127,11 +111,11 @@ HERE
 
     my $build_instructions = join( "\n\n", @build_instructions );
 
-    push @files, create_Changes( $basedir, $distro );
-    push @files, create_README( $basedir, $distro, $author, $build_instructions );
+    push @files, $self->create_Changes( $basedir, $distro );
+    push @files, $self->create_README( $basedir, $distro, $self->{author}, $build_instructions );
     push @files, "MANIFEST";
     push @files, 'META.yml # Will be created by "make dist"';
-    create_MANIFEST( $basedir, @files );
+    $self->create_MANIFEST( $basedir, @files );
 }
 
 =head2 create_directory( $dir [, $force ] )
@@ -144,6 +128,7 @@ If the directory can't be created, or re-created, it dies.
 =cut
 
 sub create_directory {
+    my $self = shift;
     my $dir = shift;
     my $force = shift;
 
@@ -158,7 +143,7 @@ sub create_directory {
     }
 
     CREATE_IT: {
-        print "Created $dir\n" if $verbose;
+        $self->progress( "Created $dir" );
 
         local @ARGV = $dir;
         mkpath();
@@ -174,19 +159,21 @@ Creates starter modules for each of the modules passed in.
 =cut
 
 sub create_modules {
+    my $self = shift;
     my $dir = shift;
     my @modules = @_;
 
     my @files;
 
     for my $module ( @modules ) {
-        push @files, _create_module( $dir, $module );
+        push @files, $self->_create_module( $dir, $module );
     }
 
     return @files;
 }
 
 sub _create_module {
+    my $self = shift;
     my $basedir = shift;
     my $module = shift;
 
@@ -199,16 +186,16 @@ sub _create_module {
         if ( not -d $dir ) {
             local @ARGV = $dir;
             mkpath @ARGV;
-            print "Created $dir\n" if $verbose;
+            $self->progress( "Created $dir" );
         }
     }
 
     my $module_file = File::Spec->catfile( @dirparts,  $filepart );
 
     open( my $fh, ">", $module_file ) or die "Can't create $module_file: $!\n";
-    print $fh &_module_guts( $module );
+    print $fh $self->_module_guts( $module );
     close $fh;
-    print "Created $module_file\n" if $verbose;
+    $self->progress( "Created $module_file" );
 
     return $manifest_file;
 }
@@ -216,28 +203,29 @@ sub _create_module {
 sub _thisyear { (localtime())[5] + 1900 }
 
 sub _module_guts {
+    my $self = shift;
     my $module = shift;
 
     my $rtname = lc $module;
     $rtname =~ s/::/-/g;
 
-    my $year = _thisyear();
+    my $year = $self->_thisyear();
 
-    return <<"HERE";
+    my $content = <<"HERE";
 package $module;
 
 use warnings;
 use strict;
 
-=head1 NAME
+==head1 NAME
 
 $module - The great new $module!
 
-=head1 Version
+==head1 Version
 
 Version 0.01
 
-=cut
+==cut
 
 our \$VERSION = '0.01';
 
@@ -252,14 +240,14 @@ Perhaps a little code snippet.
     my \$foo = $module->new();
     ...
 
-=head1 Export
+==head1 Export
 
 A list of functions that can be exported.  You can delete this section
 if you don't export anything, such as for a purely object-oriented module.
 
-=head1 Functions
+==head1 Functions
 
-=head2 function1
+==head2 function1
 
 =cut
 
@@ -268,33 +256,35 @@ sub function1 {
 
 =head2 function2
 
-=cut
+==cut
 
 sub function2 {
 }
 
-=head1 Author
+==head1 Author
 
-$author, C<< <$email> >>
+$self->{author}, C<< <$self->{email}> >>
 
-=head1 Bugs
+==head1 Bugs
 
 Please report any bugs or feature requests to
 C<bug-$rtname\@rt.cpan.org>, or through the web interface at
 L<http://rt.cpan.org>.  I will be notified, and then you'll automatically
 be notified of progress on your bug as I make changes.
 
-=head1 Copyright & License
+==head1 Copyright & License
 
-Copyright $year $author, All Rights Reserved.
+Copyright $year $self->{author}, All Rights Reserved.
 
 This program is free software; you can redistribute it and/or modify it
 under the same terms as Perl itself.
 
-=cut
+==cut
 
 1; # End of $module
 HERE
+        $content =~ s/^==/=/smg;
+        return $content;
 }
 
 =head2 create_Makefile_PL( $basedir, $distro, $main_module )
@@ -304,6 +294,7 @@ Creates a Makefile.PL for the given module distro.
 =cut
 
 sub create_Makefile_PL {
+    my $self = shift;
     my $basedir = shift;
     my $distro = shift;
     my $main_module = shift;
@@ -322,7 +313,7 @@ use ExtUtils::MakeMaker;
 
 WriteMakefile(
     NAME                => '$main_module',
-    AUTHOR              => '$author <$email>',
+    AUTHOR              => '$self->{author} <$self->{email}>',
     VERSION_FROM        => '$main_pm_file',
     ABSTRACT_FROM       => '$main_pm_file',
     PL_FILES            => {},
@@ -335,7 +326,7 @@ WriteMakefile(
 HERE
 
     close $fh;
-    print "Created $fname\n" if $verbose;
+    $self->progress( "Created $fname" );
 
     return "Makefile.PL";
 }
@@ -347,6 +338,7 @@ Creates a Build.PL for the given module distro.
 =cut
 
 sub create_Build_PL {
+    my $self = shift;
     my $basedir = shift;
     my $distro = shift;
     my $main_module = shift;
@@ -365,8 +357,8 @@ use Module::Build;
 
 my \$builder = Module::Build->new(
     module_name         => '$main_module',
-    license             => '$license',
-    dist_author         => '$author <$email>',
+    license             => '$self->{license}',
+    dist_author         => '$self->{author} <$self->{email}>',
     dist_version_from   => '$main_pm_file',
     requires => {
         'Test::More' => 0,
@@ -378,7 +370,7 @@ my \$builder = Module::Build->new(
 HERE
 
     close $fh;
-    print "Created $fname\n" if $verbose;
+    $self->progress( "Created $fname" );
 
     return "Build.PL";
 }
@@ -390,6 +382,7 @@ Creates a skeleton Changes file.
 =cut
 
 sub create_Changes {
+    my $self = shift;
     my $basedir = shift;
     my $distro = shift;
 
@@ -405,7 +398,7 @@ Revision history for $distro
 HERE
 
     close $fh;
-    print "Created $fname\n" if $verbose;
+    $self->verbose( "Created $fname" );
 
     return "Changes";
 }
@@ -417,12 +410,13 @@ Creates a skeleton README file.
 =cut
 
 sub create_README {
+    my $self = shift;
     my $basedir = shift;
     my $distro = shift;
     my $author = shift;
     my $build_instructions = shift;
 
-    my $year = _thisyear();
+    my $year = $self->_thisyear();
 
     my $fname = File::Spec->catfile( $basedir, "README" );
     open( my $fh, ">", $fname ) or die "Can't create $fname: $!\n";
@@ -449,14 +443,14 @@ COPYRIGHT AND LICENCE
 
 Put the correct copyright and licence information here.
 
-Copyright (C) $year $author
+Copyright (C) $year $self->{author}
 
 This library is free software; you can redistribute it and/or modify
 it under the same terms as Perl itself.
 HERE
 
     close $fh;
-    print "Created $fname\n" if $verbose;
+    $self->verbose( "Created $fname" );
 
     return "README";
 }
@@ -469,19 +463,20 @@ Creates a bunch of *.t files for the modules.
 =cut
 
 sub create_t {
+    my $self = shift;
     my $basedir = shift;
     my @modules = @_;
 
     my @files;
 
-    push @files, _create_t( $basedir, "pod.t", <<'HERE' );
+    push @files, $self->_create_t( $basedir, "pod.t", <<'HERE' );
 use Test::More;
 eval "use Test::Pod 1.00";
 plan skip_all => "Test::Pod 1.00 required for testing POD" if $@;
 all_pod_files_ok();
 HERE
 
-    push @files, _create_t( $basedir, "pod-coverage.t", <<'HERE' );
+    push @files, $self->_create_t( $basedir, "pod-coverage.t", <<'HERE' );
 use Test::More;
 eval "use Test::Pod::Coverage 0.08";
 plan skip_all => "Test::Pod::Coverage 0.08 required for testing POD coverage" if $@;
@@ -493,7 +488,7 @@ HERE
     my $main_module = $modules[0];
     my $use_lines = join( "\n", map { "use_ok( '$_' );" } @modules );
 
-    push @files, _create_t( $basedir, "00.load.t", <<"HERE" );
+    push @files, $self->_create_t( $basedir, "00.load.t", <<"HERE" );
 use Test::More tests => $nmodules;
 
 BEGIN {
@@ -507,6 +502,7 @@ HERE
 }
 
 sub _create_t {
+    my $self = shift;
     my $basedir = shift;
     my $filename = shift;
     my $content = shift;
@@ -516,14 +512,14 @@ sub _create_t {
     if ( not -d $tdir ) {
         local @ARGV = $tdir;
         mkpath();
-        print "Created $tdir\n" if $verbose;
+        $self->progress( "Created $tdir" );
     }
 
     my $fname = File::Spec->catfile( @dirparts, $filename );
     open( my $fh, ">", $fname ) or die "Can't create $fname: $!\n";
     print $fh $content;
     close $fh;
-    print "Created $fname\n" if $verbose;
+    $self->progress( "Created $fname" );
 
     return "t/$filename";
 }
@@ -536,6 +532,7 @@ returning the functions they create.
 =cut
 
 sub create_MANIFEST {
+    my $self = shift;
     my $basedir = shift;
     my @files = sort @_;
 
@@ -544,7 +541,7 @@ sub create_MANIFEST {
     print $fh map { "$_\n" } @files;
     close $fh;
 
-    print "Created $fname\n" if $verbose;
+    $self->progress( "Created $fname" );
 
     return "MANIFEST";
 }
@@ -557,6 +554,7 @@ certain files.
 =cut
 
 sub create_cvsignore {
+    my $self = shift;
     my $basedir = shift;
     my $distro = shift;
 
@@ -575,6 +573,30 @@ HERE
     close $fh;
 
     return; # Not a file that goes in the MANIFEST
+}
+
+=head1 Helper methods
+
+=head2 verbose
+
+Tells whether we're in verbose mode.
+
+=cut
+
+sub verbose { $_[0]->{verbose} }
+
+
+=head2 progress( @list )
+
+Takes a progress message and prints it if we're in verbose mode.
+
+=cut
+
+sub progress {
+    my $self = shift;
+    print @_, "\n" if $self->verbose;
+
+    return;
 }
 
 =head1 Description

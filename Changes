@@ -1,6 +1,14 @@
 Revision history for Perl extension Module::Starter
 
-0.06    Fri Jun 25 17:57:31 CDT 2004
+1.01_01
+        [ENHANCEMENTS]
+        * Everything is now an overridable object method.  Thanks to
+          Ricardo Signes.
+        * Added verbose() method.
+        * Added progress() method so subclass can decide how progress
+          is reported.
+
+1.00    Fri Jun 25 17:57:31 CDT 2004
 
         [ENHANCEMENTS]
         * Added a README file.  The README file is somewhat intelligently
