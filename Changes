@@ -1,5 +1,12 @@
 Revision history for Perl extension Module::Starter
 
+1.36    Mon Mar  7 08:38:00	CST 2005
+        [FIXES]
+        * 00.load.t is now 00-load.t, so VMS and RiscOS folks can use it.
+        * escape apostrophes in author name in Makefile.PL
+        * add a link directly to this dist's queue in RT, not just to RT
+        * don't set configdir to something in $HOME if it's undef
+
 1.34    Mon Sep 20 19:15:00 CDT 2004
         [ENHANCEMENTS]
         * module-starter now reads a config file

@@ -12,13 +12,13 @@ Module::Starter::Simple - a simple, comprehensive Module::Starter plugin
 
 =head1 VERSION
 
-Version 1.31_01
+Version 1.36
 
     $Header: /home/cvs/module-starter/lib/Module/Starter/Simple.pm,v 1.9 2004/08/23 02:38:57 rjbs Exp $
 
 =cut
 
-our $VERSION = '1.31_01';
+our $VERSION = '1.36';
 
 =head1 SYNOPSIS
 
@@ -255,8 +255,9 @@ $self->{author}, C<< <$self->{email}> >>
 
 Please report any bugs or feature requests to
 C<bug-$rtname\@rt.cpan.org>, or through the web interface at
-L<http://rt.cpan.org>.  I will be notified, and then you'll automatically
-be notified of progress on your bug as I make changes.
+L<http://rt.cpan.org/NoAuth/ReportBug.html?Queue=$self->{distro}>.
+I will be notified, and then you'll automatically be notified of progress on
+your bug as I make changes.
 
 \=head1 ACKNOWLEDGEMENTS
 
@@ -346,6 +347,8 @@ sub Makefile_PL_guts {
     my $main_module = shift;
     my $main_pm_file = shift;
 
+    (my $author = "$self->{author} <$self->{email}>") =~ s/'/\'/g;
+
     return <<"HERE";
 use strict;
 use warnings;
@@ -353,7 +356,7 @@ use ExtUtils::MakeMaker;
 
 WriteMakefile(
     NAME                => '$main_module',
-    AUTHOR              => '$self->{author} <$self->{email}>',
+    AUTHOR              => '$author',
     VERSION_FROM        => '$main_pm_file',
     ABSTRACT_FROM       => '$main_pm_file',
     PL_FILES            => {},
@@ -406,6 +409,8 @@ sub Build_PL_guts {
     my $main_module = shift;
     my $main_pm_file = shift;
 
+    (my $author = "$self->{author} <$self->{email}>") =~ s/'/\'/g;
+
     return <<"HERE";
 use strict;
 use warnings;
@@ -414,7 +419,7 @@ use Module::Build;
 my \$builder = Module::Build->new(
     module_name         => '$main_module',
     license             => '$self->{license}',
-    dist_author         => '$self->{author} <$self->{email}>',
+    dist_author         => '$author',
     dist_version_from   => '$main_pm_file',
     requires => {
         'Test::More' => 0,
@@ -583,14 +588,14 @@ HERE
     my $main_module = $modules[0];
     my $use_lines = join( "\n", map { "use_ok( '$_' );" } @modules );
 
-    $t_files{'00.load.t'} = <<"HERE";
+    $t_files{'00-load.t'} = <<"HERE";
 use Test::More tests => $nmodules;
 
 BEGIN {
 $use_lines
 }
 
-diag( "Testing $main_module \$${main_module}::VERSION" );
+diag( "Testing $main_module \$${main_module}::VERSION, Perl $], $^X" );
 HERE
 
     return %t_files;
@@ -688,6 +693,8 @@ sub cvsignore_guts {
 blib*
 Makefile
 Makefile.old
+Build
+_build*
 pm_to_blib*
 *.tar.gz
 .lwpcookies

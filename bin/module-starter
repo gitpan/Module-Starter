@@ -27,7 +27,8 @@ sub config_read {
 	return %config;
 }
 
-my $configdir = $ENV{MODULE_STARTER_DIR} || ($ENV{HOME} . '/.module-starter');
+my $configdir = $ENV{MODULE_STARTER_DIR}
+	|| ($ENV{HOME} ? $ENV{HOME} . '/.module-starter' : '');
 
 my %config    = config_read( "$configdir/config" );
 

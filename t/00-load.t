@@ -6,4 +6,4 @@ use_ok( 'Module::Starter' );
 use_ok( 'Module::Starter::Simple' );
 use_ok( 'Module::Starter::Plugin::Template' );
 
-diag( "Testing Module::Starter $Module::Starter::VERSION" );
+diag( "Testing Module::Starter $Module::Starter::VERSION, Perl $], $^X" );
