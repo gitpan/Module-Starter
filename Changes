@@ -1,12 +1,27 @@
 Revision history for Perl extension Module::Starter
 
-1.01_01
+1.20    Sun Jul 11 22:28:57 CDT 2004
+
         [ENHANCEMENTS]
+        * Moved some data (distro, basedir) from parameters to object data
+        * Moved some data (rtname) from routine-local to parameter data
+        * Correted lies in POD regarding args to create_distro
+        * Every create_file method now calls a file_guts method to get
+          contents.
+        * All the quoted POD inline should now not render in perldoc.
+        * The module-build script now respects --class
+        * Minor refactoring of parameters to create_directory and _module
         * Everything is now an overridable object method.  Thanks to
           Ricardo Signes.
         * Added verbose() method.
         * Added progress() method so subclass can decide how progress
           is reported.
+
+        All of the above is courtesy the diligent work of Ricard Signes.
+
+        [DOCUMENTATION]
+        * Large expansion of POD (Starter.pm and module-starter)
+
 
 1.00    Fri Jun 25 17:57:31 CDT 2004
 

@@ -15,29 +15,42 @@ my @modules;
 my $distro;
 my $dir;
 my @builders;
+my $class = 'Module::Starter';
+my ($author, $email, $license, $force, $verbose);
 
 GetOptions(
-    "distro=s" =>   \$distro,
-    "module=s" =>   \@modules,
+    "class=s"   =>   \$class,
+    "dir=s"     =>   \$dir,
+    "distro=s"  =>   \$distro,
+    "module=s"  =>   \@modules,
     "builder=s" =>  \@builders,
     eumm =>         sub { push @builders, "ExtUtils::MakeMaker" },
-    mb =>           sub { push @builders, "Module::Build" },
+    mb   =>         sub { push @builders, "Module::Build" },
 
-    "author=s" =>   \$Module::Starter::author,
-    "email=s" =>    \$Module::Starter::email,
-    "license=s" =>  \$Module::Starter::license,
-    force =>        \$Module::Starter::force,
-    verbose =>      \$Module::Starter::verbose,
+    "author=s"  =>  \$author,
+    "email=s"   =>  \$email,
+    "license=s" =>  \$license,
+    force   =>      \$force,
+    verbose =>      \$verbose,
     version =>      sub { print "module-starter v$Module::Starter::VERSION\n"; exit 1; },
     help =>         sub { pod2usage(1); },
 ) or pod2usage(2);
 
 @builders = ('ExtUtils::MakeMaker') unless @builders;
 
-create_distro(
+eval "require $class;";
+die "invalid starter class $class" if $@;
+
+$class->create_distro(
+    dir     => $dir,
     distro  => $distro,
     modules => [@modules],
     builder => [@builders],
+    author  => $author,
+    email   => $email,
+    license => $license,
+    force   => $force,
+    verbose => $verbose,
 );
 
 print "Created starter directories and files\n";
@@ -49,7 +62,7 @@ module-starter [options]
 
 Options:
 
-    --module=module  Module name (repeatable)
+    --module=module  Module name (required, repeatable)
     --distro=name    Distribution name (optional)
     --dir            Directory name to create new module in (optional)
 
@@ -57,13 +70,13 @@ Options:
     --eumm           Same as --build=ExtUtils::MakeMaker
     --mb             Same as --build=Module::Build
 
-    The builder options may be repeated to create files for multiple builders.
-
     --author=name    Author's name (required)
     --email=email    Author's email (required)
-
     --license=type   License under which the module will be distributed
                      (default is the same license as perl)
+
+    --verbose        Print progress messages while working
+    --force          Delete pre-existing files if needed
 
     --help           Show this message
 
@@ -71,6 +84,19 @@ Example:
 
     module-starter --module=Foo::Bar,Foo::Bat \
         --author="Andy Lester" --email=andy@petdance.com
+
+=head1 DESCRIPTION
+
+C<module-starter> is a command-line interface to L<Module::Starter>, which it
+uses to perform all the work of creating distributions.  An alternate backend
+for C<module-starter> can be specified with the C<--class> option.
+
+If no directory name is supplied, the distribution name will be used for the
+directory.  If no distribution name is supplied, the first listed module name
+will be used as the distribution name.
+
+Multiple --builder options may be supplied to produce the files for multiple
+builders.
 
 =cut
 

@@ -1,3 +1,4 @@
+# vi:et:sw=4 ts=4
 package Module::Starter;
 
 use strict;
@@ -5,23 +6,19 @@ use strict;
 use ExtUtils::Command qw( rm_rf mkpath touch );
 use File::Spec;
 
-use vars qw( @ISA );
-
-@ISA = qw( Exporter );
-
 =head1 NAME
 
 Module::Starter - Starter kit for any module
 
 =head1 Version
 
-Version 1.01_01
+Version 1.20
 
-    $Header: /home/cvs/module-starter/Starter.pm,v 1.30 2004/07/10 02:43:09 andy Exp $
+    $Header: /home/cvs/module-starter/Starter.pm,v 1.39 2004/07/12 03:29:05 andy Exp $
 
 =cut
 
-our $VERSION = '1.01_01';
+our $VERSION = '1.20';
 
 =head1 Synopsis
 
@@ -32,32 +29,40 @@ from the command line.
         --author="Andy Lester" --email=andy@petdance.com
 
 
-=head1 Methods
+=head1 Public Methods
 
-=head2 create_distro()
+=head2 Module::Starter->create_distro(%args)
 
-Takes a hash of parms:
+C<create_distro> is the only method you should need to use from outside this
+module; all the other methods are called internally by this one.
 
-    dir     => $dirname,
-    modules => [ module names ],
-    distro  => $distroname,
-    builder => 'Module::Build', # Defaults to ExtUtils::MakeMaker
-                                # or specify more than one builder
-    builder => [ 'Module::Build', 'ExtUtils::MakeMaker' ],
-    license => $license_type,   # defaults to 'perl'
-    author  => $author, 
-    email   => $email,
+This method creates orchestrates all the work; it creates distribution and
+populates it with the all the requires files.
 
-    verbose => $verbose,  # boolean; defaults to 0
-    force   => $force     # boolean; defaults to 0
+It takes a hash of params, as follows:
+
+    distro  => $distroname,      # distribution name (defaults to first module)
+    modules => [ module names ], # modules to create in distro
+    dir     => $dirname,         # directory in which to build distro
+    builder => 'Module::Build',  # defaults to ExtUtils::MakeMaker
+                                 # or specify more than one builder in an
+                                 # arrayref
+
+    license => $license,  # type of license; defaults to 'perl'
+    author  => $author,   # author's full name (required)
+    email   => $email,    # author's email address (required)
+
+    verbose => $verbose,  # bool: print progress messages; defaults to 0
+    force   => $force     # bool: overwrite existing files; defaults to 0
 
 =cut
+
+sub _new { my $class = shift; bless { @_ } => $class; }
 
 sub create_distro {
     my $class = shift;
 
-    my $self = { @_ };
-    bless $self, $class;
+    my $self = $class->_new( @_ );
 
     my $modules = $self->{modules} || [];
     my @modules = map { split /,/ } @$modules;
@@ -66,23 +71,23 @@ sub create_distro {
     die "Must specify an author\n" unless $self->{author};
     die "Must specify an email address\n" unless $self->{email};
 
-    my $distro = $self->{distro};
-    if ( not defined $distro ) {
-        $distro = $modules[0];
-        $distro =~ s/::/-/g;
+    if ( not defined $self->{distro} ) {
+        $self->{distro} = $modules[0];
+        $self->{distro} =~ s/::/-/g;
     }
 
-    my $basedir = $self->{dir} || $distro;
-    $self->create_directory( $basedir, $self->{force} );
+    $self->{basedir} = $self->{dir} || $self->{distro};
+    $self->create_basedir;
 
     my @files;
-    push @files, $self->create_modules( $basedir, @modules );
+    push @files, $self->create_modules( @modules );
 
-    push @files, $self->create_t( $basedir, @modules );
-    push @files, $self->create_cvsignore( $basedir, $distro );
+    push @files, $self->create_t( @modules );
+    push @files, $self->create_cvsignore;
 
     my @builders = (ref $self->{builder} eq "ARRAY") ?  @{$self->{builder}} : ($self->{builder});
 
+    # this block should be pulled out to its own sub
     my @build_instructions;
     for my $builder ( @builders ) {
         if ( !@build_instructions ) {
@@ -91,7 +96,7 @@ sub create_distro {
             push @build_instructions, "Alternatively, to install with $builder, you can use the following commands:";
         }
         if ( $builder eq 'Module::Build' ) {
-            push @files, $self->create_Build_PL( $basedir, $distro, $modules[0] );
+            push @files, $self->create_Build_PL( $modules[0] );
             push @build_instructions, <<'HERE';
     perl Build.PL
     ./Build
@@ -99,7 +104,7 @@ sub create_distro {
     ./Build install
 HERE
         } else {
-            push @files, $self->create_Makefile_PL( $basedir, $distro, $modules[0] );
+            push @files, $self->create_Makefile_PL( $modules[0] );
             push @build_instructions, <<'HERE';
     perl Makefile.PL
     make
@@ -111,103 +116,86 @@ HERE
 
     my $build_instructions = join( "\n\n", @build_instructions );
 
-    push @files, $self->create_Changes( $basedir, $distro );
-    push @files, $self->create_README( $basedir, $distro, $self->{author}, $build_instructions );
+    push @files, $self->create_Changes;
+    push @files, $self->create_README( $build_instructions );
     push @files, "MANIFEST";
     push @files, 'META.yml # Will be created by "make dist"';
-    $self->create_MANIFEST( $basedir, @files );
+    $self->create_MANIFEST( @files );
 }
 
-=head2 create_directory( $dir [, $force ] )
+=head1 Private Methods
 
-Creates a directory at I<$dir>.  If the directory already exists, and
-I<$force> is true, then the existing directory will get erased.
+All the methods documented below are object methods, meant to be called
+internally by the ephemperal objects created during the execution of the class
+method C<create_distro> above.
+
+=head2 create_basedir
+
+Creates the base directory for the distribution.  If the directory already
+exists, and I<$force> is true, then the existing directory will get erased.
 
 If the directory can't be created, or re-created, it dies.
 
 =cut
 
-sub create_directory {
+sub create_basedir {
     my $self = shift;
-    my $dir = shift;
-    my $force = shift;
 
     # Make sure there's no directory
-    if ( -e $dir ) {
-        die "$dir already exists.  Use --force if you want to stomp on it.\n" unless $force;
+    if ( -e $self->{basedir} ) {
+        die "$self->{basedir} already exists.  Use --force if you want to stomp on it.\n" unless $self->{force};
 
-        local @ARGV = $dir;
+        local @ARGV = $self->{basedir};
         rm_rf();
 
-        die "Couldn't delete existing $dir: $!\n" if -e $dir;
+        die "Couldn't delete existing $self->{basedir}: $!\n" if -e $self->{basedir};
     }
 
     CREATE_IT: {
-        $self->progress( "Created $dir" );
+        $self->progress( "Created $self->{basedir}" );
 
-        local @ARGV = $dir;
+        local @ARGV = $self->{basedir};
         mkpath();
 
-        die "Couldn't create $dir: $!\n" unless -d $dir;
+        die "Couldn't create $self->{basedir}: $!\n" unless -d $self->{basedir};
     }
 }
 
-=head2 create_modules( $dir, @modules )
+=head2 create_modules( @modules )
 
-Creates starter modules for each of the modules passed in.
+This method will create a starter module file for each module named in
+I<@modules>.
 
 =cut
 
 sub create_modules {
     my $self = shift;
-    my $dir = shift;
     my @modules = @_;
 
     my @files;
 
     for my $module ( @modules ) {
-        push @files, $self->_create_module( $dir, $module );
+        my $rtname = lc $module;
+        $rtname =~ s/::/-/g;
+        push @files, $self->_create_module( $module, $rtname );
     }
 
     return @files;
 }
 
-sub _create_module {
-    my $self = shift;
-    my $basedir = shift;
-    my $module = shift;
+=head2 module_guts( $module, $rtname )
 
-    my @parts = split( /::/, $module );
-    my $filepart = (pop @parts) . ".pm";
-    my @dirparts = ( $basedir, 'lib', @parts );
-    my $manifest_file = join( "/", "lib", @parts, $filepart );
-    if ( @dirparts ) {
-        my $dir = File::Spec->catdir( @dirparts );
-        if ( not -d $dir ) {
-            local @ARGV = $dir;
-            mkpath @ARGV;
-            $self->progress( "Created $dir" );
-        }
-    }
+This method returns the text which should serve as the contents for the named
+module.  I<$rtname> is the email suffix which rt.cpan.org will use for bug
+reports.  (This should, and will, be moved out of the parameters for this
+method eventually.)
 
-    my $module_file = File::Spec->catfile( @dirparts,  $filepart );
+=cut
 
-    open( my $fh, ">", $module_file ) or die "Can't create $module_file: $!\n";
-    print $fh $self->_module_guts( $module );
-    close $fh;
-    $self->progress( "Created $module_file" );
-
-    return $manifest_file;
-}
-
-sub _thisyear { (localtime())[5] + 1900 }
-
-sub _module_guts {
+sub module_guts {
     my $self = shift;
     my $module = shift;
-
-    my $rtname = lc $module;
-    $rtname =~ s/::/-/g;
+    my $rtname = shift;
 
     my $year = $self->_thisyear();
 
@@ -229,7 +217,7 @@ Version 0.01
 
 our \$VERSION = '0.01';
 
-=head1 Synopsis
+==head1 Synopsis
 
 Quick summary of what the module does.
 
@@ -249,7 +237,7 @@ if you don't export anything, such as for a purely object-oriented module.
 
 ==head2 function1
 
-=cut
+==cut
 
 sub function1 {
 }
@@ -283,30 +271,83 @@ under the same terms as Perl itself.
 
 1; # End of $module
 HERE
-        $content =~ s/^==/=/smg;
-        return $content;
+    $content =~ s/^==/=/smg;
+    return $content;
 }
 
-=head2 create_Makefile_PL( $basedir, $distro, $main_module )
+# _create_module: used by create_modules to build each file and put data in it
 
-Creates a Makefile.PL for the given module distro.
+sub _create_module {
+    my $self = shift;
+    my $module = shift;
+    my $rtname = shift;
+
+    my @parts = split( /::/, $module );
+    my $filepart = (pop @parts) . ".pm";
+    my @dirparts = ( $self->{basedir}, 'lib', @parts );
+    my $manifest_file = join( "/", "lib", @parts, $filepart );
+    if ( @dirparts ) {
+        my $dir = File::Spec->catdir( @dirparts );
+        if ( not -d $dir ) {
+            local @ARGV = $dir;
+            mkpath @ARGV;
+            $self->progress( "Created $dir" );
+        }
+    }
+
+    my $module_file = File::Spec->catfile( @dirparts,  $filepart );
+
+    open( my $fh, ">", $module_file ) or die "Can't create $module_file: $!\n";
+    print $fh $self->module_guts( $module, $rtname );
+    close $fh;
+    $self->progress( "Created $module_file" );
+
+    return $manifest_file;
+}
+
+sub _thisyear { (localtime())[5] + 1900 }
+
+
+=head2 create_Makefile_PL( $main_module )
+
+This will create the Makefile.PL for the distribution, and will use the module
+named in I<$main_module> as the main module of the distribution.
 
 =cut
 
 sub create_Makefile_PL {
     my $self = shift;
-    my $basedir = shift;
-    my $distro = shift;
     my $main_module = shift;
 
     my @parts = split( /::/, $main_module );
     my $pm = pop @parts;
     my $main_pm_file = File::Spec->catfile( "lib", @parts, "${pm}.pm" );
 
-    my $fname = File::Spec->catfile( $basedir, "Makefile.PL" );
+    my $fname = File::Spec->catfile( $self->{basedir}, "Makefile.PL" );
     open( my $fh, ">", $fname ) or die "Can't create $fname: $!\n";
 
-print $fh <<"HERE";
+    print $fh $self->Makefile_PL_guts($main_module, $main_pm_file);
+
+    close $fh;
+    $self->progress( "Created $fname" );
+
+    return "Makefile.PL";
+}
+
+=head2 Makefile_PL_guts( $main_module, $main_pm_file )
+
+This method is called by create_Makefile_PL and returns text used to populate
+Makefile.PL; I<$main_pm_file> is the filename of the distribution's main
+module, I<$main_module>.
+
+=cut
+
+sub Makefile_PL_guts {
+    my $self = shift;
+    my $main_module = shift;
+    my $main_pm_file = shift;
+
+    return <<"HERE";
 use strict;
 use warnings;
 use ExtUtils::MakeMaker;
@@ -321,36 +362,52 @@ WriteMakefile(
         'Test::More' => 0,
     },
     dist                => { COMPRESS => 'gzip -9f', SUFFIX => 'gz', },
-    clean               => { FILES => '$distro-*' },
+    clean               => { FILES => '$self->{distro}-*' },
 );
 HERE
 
-    close $fh;
-    $self->progress( "Created $fname" );
-
-    return "Makefile.PL";
 }
 
-=head2 create_Build_PL( $basedir, $distro, $main_module )
+=head2 create_Build_PL( $main_module )
 
-Creates a Build.PL for the given module distro.
+This will create the Build.PL for the distribution, and will use the module
+named in I<$main_module> as the main module of the distribution.
 
 =cut
 
 sub create_Build_PL {
     my $self = shift;
-    my $basedir = shift;
-    my $distro = shift;
     my $main_module = shift;
 
     my @parts = split( /::/, $main_module );
     my $pm = pop @parts;
     my $main_pm_file = File::Spec->catfile( "lib", @parts, "${pm}.pm" );
 
-    my $fname = File::Spec->catfile( $basedir, "Build.PL" );
+    my $fname = File::Spec->catfile( $self->{basedir}, "Build.PL" );
     open( my $fh, ">", $fname ) or die "Can't create $fname: $!\n";
 
-print $fh <<"HERE";
+    print $fh $self->Build_PL_guts($main_module, $main_pm_file);
+
+    close $fh;
+    $self->progress( "Created $fname" );
+
+    return "Build.PL";
+}
+
+=head2 Build_PL_guts( $main_module, $main_pm_file )
+
+This method is called by create_Build_PL and returns text used to populate
+Build.PL; I<$main_pm_file> is the filename of the distribution's main module,
+I<$main_module>.
+
+=cut
+
+sub Build_PL_guts {
+    my $self = shift;
+    my $main_module = shift;
+    my $main_pm_file = shift;
+
+    return <<"HERE";
 use strict;
 use warnings;
 use Module::Build;
@@ -363,39 +420,27 @@ my \$builder = Module::Build->new(
     requires => {
         'Test::More' => 0,
     },
-    add_to_cleanup      => [ '$distro-*' ],
+    add_to_cleanup      => [ '$self->{distro}-*' ],
 );
 
 \$builder->create_build_script();
 HERE
 
-    close $fh;
-    $self->progress( "Created $fname" );
-
-    return "Build.PL";
 }
 
-=head2 create_Changes( $basedir, $distro )
+=head2 create_Changes( )
 
-Creates a skeleton Changes file.
+This method creates a skeletal Changes file.
 
 =cut
 
 sub create_Changes {
     my $self = shift;
-    my $basedir = shift;
-    my $distro = shift;
 
-    my $fname = File::Spec->catfile( $basedir, "Changes" );
+    my $fname = File::Spec->catfile( $self->{basedir}, "Changes" );
     open( my $fh, ">", $fname ) or die "Can't create $fname: $!\n";
 
-print $fh <<"HERE";
-Revision history for $distro
-
-0.01    Date/time
-        First version, released on an unsuspecting world.
-
-HERE
+    print $fh $self->Changes_guts();
 
     close $fh;
     $self->verbose( "Created $fname" );
@@ -403,26 +448,59 @@ HERE
     return "Changes";
 }
 
-=head2 create_README( $basedir, $distro )
+=head2 Changes_guts
 
-Creates a skeleton README file.
+Called by create_Changes, this method returns content for the Changes file.
+
+=cut
+
+sub Changes_guts {
+    my $self = shift;
+
+    return <<"HERE";
+Revision history for $self->{distro}
+
+0.01    Date/time
+        First version, released on an unsuspecting world.
+
+HERE
+}
+
+=head2 create_README( $build_instructions )
+
+This method creates the distribution's README file.
 
 =cut
 
 sub create_README {
     my $self = shift;
-    my $basedir = shift;
-    my $distro = shift;
-    my $author = shift;
+    my $build_instructions = shift;
+
+    my $fname = File::Spec->catfile( $self->{basedir}, "README" );
+    open( my $fh, ">", $fname ) or die "Can't create $fname: $!\n";
+
+    print $fh $self->README_guts($build_instructions);
+
+    close $fh;
+    $self->verbose( "Created $fname" );
+
+    return "README";
+}
+
+=head2 README_guts
+
+Called by create_README, this method returns content for the README file.
+
+=cut
+
+sub README_guts {
+    my $self = shift;
     my $build_instructions = shift;
 
     my $year = $self->_thisyear();
 
-    my $fname = File::Spec->catfile( $basedir, "README" );
-    open( my $fh, ">", $fname ) or die "Can't create $fname: $!\n";
-
-print $fh <<"HERE";
-$distro
+return <<"HERE";
+$self->{distro}
 
 The README is used to introduce the module and provide instructions on
 how to install the module, any machine dependencies it may have (for
@@ -448,47 +526,61 @@ Copyright (C) $year $self->{author}
 This library is free software; you can redistribute it and/or modify
 it under the same terms as Perl itself.
 HERE
-
-    close $fh;
-    $self->verbose( "Created $fname" );
-
-    return "README";
 }
 
+=head2 create_t( @modules )
 
-=head2 create_t( $basedir, @modules )
-
-Creates a bunch of *.t files for the modules.
+This method creates a bunch of *.t files.  I<@modules> is a list of all modules
+in the distribution.
 
 =cut
 
 sub create_t {
     my $self = shift;
-    my $basedir = shift;
     my @modules = @_;
 
-    my @files;
+    my %t_files = $self->t_guts(@modules);
 
-    push @files, $self->_create_t( $basedir, "pod.t", <<'HERE' );
+    my @files = map { $self->_create_t($_, $t_files{$_}) } keys %t_files;
+
+    return @files;
+}
+
+=head2 t_guts( @modules )
+
+This method is called by create_t, and returns a description of the *.t files
+to be created.
+
+The return value is a hash of test files to create.  Each key is a filename and
+each value is the contents of that file.
+
+=cut
+
+sub t_guts {
+    my $self = shift;
+    my @modules = @_;
+
+    my %t_files;
+
+    $t_files{'pod.t'} = <<'HERE';
 use Test::More;
 eval "use Test::Pod 1.00";
 plan skip_all => "Test::Pod 1.00 required for testing POD" if $@;
 all_pod_files_ok();
 HERE
 
-    push @files, $self->_create_t( $basedir, "pod-coverage.t", <<'HERE' );
+    $t_files{'pod-coverage.t'} = <<'HERE';
 use Test::More;
 eval "use Test::Pod::Coverage 0.08";
 plan skip_all => "Test::Pod::Coverage 0.08 required for testing POD coverage" if $@;
 all_pod_coverage_ok();
 HERE
 
-
     my $nmodules = @modules;
     my $main_module = $modules[0];
     my $use_lines = join( "\n", map { "use_ok( '$_' );" } @modules );
 
-    push @files, $self->_create_t( $basedir, "00.load.t", <<"HERE" );
+    $t_files{'00.load.t'} = <<"HERE";
 use Test::More tests => $nmodules;
 
 BEGIN {
@@ -498,16 +590,15 @@ $use_lines
 diag( "Testing $main_module \$${main_module}::VERSION" );
 HERE
 
-    return @files;
+    return %t_files;
 }
 
 sub _create_t {
     my $self = shift;
-    my $basedir = shift;
     my $filename = shift;
     my $content = shift;
 
-    my @dirparts = ( $basedir, "t" );
+    my @dirparts = ( $self->{basedir}, "t" );
     my $tdir = File::Spec->catdir( @dirparts );
     if ( not -d $tdir ) {
         local @ARGV = $tdir;
@@ -524,21 +615,21 @@ sub _create_t {
     return "t/$filename";
 }
 
-=head2 create_MANIFEST( $basedir, @files )
+=head2 create_MANIFEST( @files )
 
-Must be run last, because all the other create_* functions have been
-returning the functions they create.
+This method creates the distribution's MANIFEST file.  It must be run last,
+because all the other create_* functions have been returning the functions they
+create.
 
 =cut
 
 sub create_MANIFEST {
     my $self = shift;
-    my $basedir = shift;
-    my @files = sort @_;
+    my @files = @_;
 
-    my $fname = File::Spec->catfile( $basedir, "MANIFEST" );
+    my $fname = File::Spec->catfile( $self->{basedir}, "MANIFEST" );
     open( my $fh, ">", $fname ) or die "Can't create $fname: $!\n";
-    print $fh map { "$_\n" } @files;
+    print $fh $self->MANIFEST_guts(@files);
     close $fh;
 
     $self->progress( "Created $fname" );
@@ -546,40 +637,67 @@ sub create_MANIFEST {
     return "MANIFEST";
 }
 
-=head2 create_cvsignore( $basedir, $distro )
+=head2 MANIFEST_guts( @files )
 
-Create .cvsignore file in the root so that your CVS knows to ignore
-certain files.
+This method is called by C<create_MANIFEST>, and returns content for the
+MANIFEST file.
+
+=cut
+
+sub MANIFEST_guts {
+    my $self = shift;
+    my @files = sort @_;
+
+    my $content = '';
+    $content .= "$_\n" for @files;
+    return $content;
+}
+
+=head2 create_cvsignore( )
+
+This creates a .cvsignore file in the distribution's directory so that your CVS
+knows to ignore certain files.
 
 =cut
 
 sub create_cvsignore {
     my $self = shift;
-    my $basedir = shift;
-    my $distro = shift;
 
-    my $fname = File::Spec->catfile( $basedir, ".cvsignore" );
+    my $fname = File::Spec->catfile( $self->{basedir}, ".cvsignore" );
     open( my $fh, ">", $fname ) or die "Can't create $fname: $!\n";
-    print $fh <<"HERE";
+    print $fh $self->cvsignore_guts();
+    close $fh;
+
+    return; # Not a file that goes in the MANIFEST
+}
+
+=head2 cvsignore_guts
+
+Called by C<create_cvsignore>, this method returns the contents of the
+cvsignore file.
+
+=cut
+
+sub cvsignore_guts {
+    my $self = shift;
+
+    return <<"HERE";
 blib*
 Makefile
 Makefile.old
 pm_to_blib*
 *.tar.gz
 .lwpcookies
-$distro-*
+$self->{distro}-*
 cover_db
 HERE
-    close $fh;
-
-    return; # Not a file that goes in the MANIFEST
 }
 
-=head1 Helper methods
+=head1 Helper Methods
 
 =head2 verbose
 
-Tells whether we're in verbose mode.
+C<verbose> tells us whether we're in verbose mode.
 
 =cut
 
@@ -588,7 +706,7 @@ sub verbose { $_[0]->{verbose} }
 
 =head2 progress( @list )
 
-Takes a progress message and prints it if we're in verbose mode.
+C<progress> prints the given progress message if we're in verbose mode.
 
 =cut
 
@@ -598,10 +716,6 @@ sub progress {
 
     return;
 }
-
-=head1 Description
-
-=head1 Export
 
 =head1 Bugs
 
