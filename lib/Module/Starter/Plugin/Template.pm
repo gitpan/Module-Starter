@@ -89,14 +89,14 @@ sub render {
 All of the C<FILE_guts> methods from Module::Starter::Simple are subclassed to
 look something like this:
 
- sub file_guts {
-   my $self = shift;
-   my %options;
-   @options{qw(first second third)} = @_;
+    sub file_guts {
+        my $self = shift;
+        my %options;
+        @options{qw(first second third)} = @_;
 
-   my $template = $self->{templates}{filename};
-   $self->render($template, \%options);
- }
+        my $template = $self->{templates}{filename};
+        $self->render($template, \%options);
+    }
 
 These methods will need to be rewritten when (as is likely)
 Module::Starter::Simple's _guts methods are refactored into a registry.

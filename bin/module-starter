@@ -18,6 +18,8 @@ my $dir;
 my @builders;
 my ($author, $email, $license, $force, $verbose);
 
+pod2usage(2) unless @ARGV;
+
 GetOptions(
     "class=s"   =>  \$class,
     "plugin=s"  =>  \@plugins,

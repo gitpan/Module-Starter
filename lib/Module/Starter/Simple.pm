@@ -12,13 +12,13 @@ Module::Starter::Simple - a simple, comprehensive Module::Starter plugin
 
 =head1 VERSION
 
-Version 1.22
+Version 1.30
 
-    $Header: /home/cvs/module-starter/lib/Module/Starter/Simple.pm,v 1.4 2004/07/21 22:50:32 rjbs Exp $
+    $Header: /home/cvs/module-starter/lib/Module/Starter/Simple.pm,v 1.6 2004/08/16 19:03:16 rjbs Exp $
 
 =cut
 
-our $VERSION = '1.22';
+our $VERSION = '1.30';
 
 =head1 SYNOPSIS
 
@@ -202,7 +202,7 @@ use strict;
 
 $module - The great new $module!
 
-\=head1 Version
+\=head1 VERSION
 
 Version 0.01
 
@@ -210,7 +210,7 @@ Version 0.01
 
 our \$VERSION = '0.01';
 
-\=head1 Synopsis
+\=head1 SYNOPSIS
 
 Quick summary of what the module does.
 
@@ -221,12 +221,12 @@ Perhaps a little code snippet.
     my \$foo = $module->new();
     ...
 
-\=head1 Export
+\=head1 EXPORT
 
 A list of functions that can be exported.  You can delete this section
 if you don't export anything, such as for a purely object-oriented module.
 
-\=head1 Functions
+\=head1 FUNCTIONS
 
 \=head2 function1
 
@@ -242,18 +242,20 @@ sub function1 {
 sub function2 {
 }
 
-\=head1 Author
+\=head1 AUTHOR
 
 $self->{author}, C<< <$self->{email}> >>
 
-\=head1 Bugs
+\=head1 BUGS
 
 Please report any bugs or feature requests to
 C<bug-$rtname\@rt.cpan.org>, or through the web interface at
 L<http://rt.cpan.org>.  I will be notified, and then you'll automatically
 be notified of progress on your bug as I make changes.
 
-\=head1 Copyright & License
+\=head1 ACKNOWLEDGEMENTS
+
+\=head1 COPYRIGHT & LICENSE
 
 Copyright $year $self->{author}, All Rights Reserved.
 
