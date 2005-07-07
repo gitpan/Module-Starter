@@ -12,13 +12,13 @@ Module::Starter::Simple - a simple, comprehensive Module::Starter plugin
 
 =head1 VERSION
 
-Version 1.38
+Version 1.40
 
-    $Id: Simple.pm 18 2005-03-17 02:29:55Z rjbs $
+    $Id: Simple.pm 23 2005-07-07 02:34:26Z rjbs $
 
 =cut
 
-our $VERSION = '1.38';
+our $VERSION = '1.40';
 
 =head1 SYNOPSIS
 
@@ -193,12 +193,31 @@ method eventually.)
 
 =cut
 
+sub _license_blurb {
+  my $self = shift;
+  my $license_blurb;
+
+  if ($self->{license} eq 'perl') {
+    $license_blurb = <<EOT;
+This program is free software; you can redistribute it and/or modify it
+under the same terms as Perl itself.
+EOT
+  } else {
+    $license_blurb = <<EOT;
+This program is released under the following license: $self->{license}
+EOT
+  }
+  chomp $license_blurb;
+  return $license_blurb;
+}
+
 sub module_guts {
     my $self = shift;
     my $module = shift;
     my $rtname = shift;
 
     my $year = $self->_thisyear();
+    my $license_blurb = $self->_license_blurb();
 
     my $content = <<"HERE";
 package $module;
@@ -266,10 +285,9 @@ your bug as I make changes.
 
 \=head1 COPYRIGHT & LICENSE
 
-Copyright $year $self->{author}, All Rights Reserved.
+Copyright $year $self->{author}, all rights reserved.
 
-This program is free software; you can redistribute it and/or modify it
-under the same terms as Perl itself.
+$license_blurb
 
 \=cut
 
@@ -325,6 +343,7 @@ sub create_Makefile_PL {
     my @parts = split( /::/, $main_module );
     my $pm = pop @parts;
     my $main_pm_file = File::Spec->catfile( "lib", @parts, "${pm}.pm" );
+       $main_pm_file =~ s{\\}{/}g; # even on Win32, use forward slash
 
     my $fname = File::Spec->catfile( $self->{basedir}, "Makefile.PL" );
     open( my $fh, ">", $fname ) or die "Can't create $fname: $!\n";
@@ -387,6 +406,7 @@ sub create_Build_PL {
     my @parts = split( /::/, $main_module );
     my $pm = pop @parts;
     my $main_pm_file = File::Spec->catfile( "lib", @parts, "${pm}.pm" );
+       $main_pm_file =~ s{\\}{/}g; # even on Win32, use forward slash
 
     my $fname = File::Spec->catfile( $self->{basedir}, "Build.PL" );
     open( my $fh, ">", $fname ) or die "Can't create $fname: $!\n";
@@ -505,6 +525,7 @@ sub README_guts {
     my $build_instructions = shift;
 
     my $year = $self->_thisyear();
+    my $license_blurb = $self->_license_blurb();
 
 return <<"HERE";
 $self->{distro}
@@ -526,12 +547,9 @@ $build_instructions
 
 COPYRIGHT AND LICENCE
 
-Put the correct copyright and licence information here.
-
 Copyright (C) $year $self->{author}
 
-This library is free software; you can redistribute it and/or modify
-it under the same terms as Perl itself.
+$license_blurb
 HERE
 }
 
@@ -589,16 +607,18 @@ HERE
 
     my $nmodules = @modules;
     my $main_module = $modules[0];
-    my $use_lines = join( "\n", map { "use_ok( '$_' );" } @modules );
+    my $use_lines = join( "\n", map { "\tuse_ok( '$_' );" } @modules );
 
     $t_files{'00-load.t'} = <<"HERE";
+#!perl -T
+
 use Test::More tests => $nmodules;
 
 BEGIN {
 $use_lines
 }
 
-diag( "Testing $main_module \$${main_module}::VERSION, Perl $], $^X" );
+diag( "Testing $main_module \$${main_module}::VERSION, Perl \$], \$^X" );
 HERE
 
     return %t_files;
@@ -678,6 +698,7 @@ sub create_cvsignore {
     open( my $fh, ">", $fname ) or die "Can't create $fname: $!\n";
     print $fh $self->cvsignore_guts();
     close $fh;
+    $self->progress( "Created .cvsignore" );
 
     return; # Not a file that goes in the MANIFEST
 }
@@ -743,7 +764,7 @@ Andy Lester, C<< <andy@petdance.com> >>
 
 =head1 Copyright & License
 
-Copyright 2004 Andy Lester, All Rights Reserved.
+Copyright 2005 Andy Lester, All Rights Reserved.
 
 This program is free software; you can redistribute it and/or modify it
 under the same terms as Perl itself.

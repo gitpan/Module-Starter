@@ -1,5 +1,12 @@
 Revision history for Perl extension Module::Starter
 
+1.40    Wed Jul  6 19:30:00 CDT 2005
+        [FIXES]
+        * document --dir option to module-starter
+        * proper escaping of $] and $^X
+        * never use \ for path delimiters in {Makefile,Build}.PL
+        * don't always completely ignore --license
+
 1.38    Wed Mar 16 20:28:00 CST 2005
         [FIXES]
         * don't allow invalid module names

@@ -53,7 +53,7 @@ GetOptions(
     "license=s" =>  \$config{license},
     force   =>      \$config{force},
     verbose =>      \$config{verbose},
-    version =>      sub { print "module-starter v$Module::Starter::VERSION\n"; exit 1; },
+    version =>      sub { require Module::Starter; print "module-starter v$Module::Starter::VERSION\n"; exit 1; },
     help    =>         sub { pod2usage(1); },
 ) or pod2usage(2);
 
@@ -78,7 +78,7 @@ Options:
 
     --module=module  Module name (required, repeatable)
     --distro=name    Distribution name (optional)
-    --dir            Directory name to create new module in (optional)
+    --dir=dirname    Directory name to create new module in (optional)
 
     --builder=module Build with 'ExtUtils::MakeMaker' or 'Module::Build'
     --eumm           Same as --build=ExtUtils::MakeMaker
