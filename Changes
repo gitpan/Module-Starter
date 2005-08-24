@@ -1,5 +1,15 @@
 Revision history for Perl extension Module::Starter
 
+1.41_01 Tue Aug 23 20:08:00 CDT 2005
+        [FIXES]
+        * don't build Build.PL or Makefile.PL multiple times
+        * move Test::More from require to build_require in Build.PL
+        [ENHANCEMENTS]
+        * Email addresses are now obfuscated very basically as 
+          "andy at petdance.com".
+        * include boilerplate.t to notice unchanged boilerplate text
+        * experimental new method to handle plugin loading
+
 1.40    Wed Jul  6 19:30:00 CDT 2005
         [FIXES]
         * document --dir option to module-starter

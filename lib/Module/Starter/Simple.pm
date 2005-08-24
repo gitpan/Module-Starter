@@ -12,13 +12,11 @@ Module::Starter::Simple - a simple, comprehensive Module::Starter plugin
 
 =head1 VERSION
 
-Version 1.40
-
-    $Id: Simple.pm 23 2005-07-07 02:34:26Z rjbs $
+Version 1.41_01
 
 =cut
 
-our $VERSION = '1.40';
+our $VERSION = '1.41_01';
 
 =head1 SYNOPSIS
 
@@ -55,6 +53,7 @@ sub create_distro {
 
     die "Must specify an author\n" unless $self->{author};
     die "Must specify an email address\n" unless $self->{email};
+    ($self->{email_obfuscated} = $self->{email}) =~ s/@/ at /;
 
     $self->{license} ||= 'perl';
 
@@ -72,9 +71,13 @@ sub create_distro {
     push @files, $self->create_t( @modules );
     push @files, $self->create_cvsignore;
 
-    my @builders = (ref $self->{builder} eq "ARRAY")
-        ? @{$self->{builder}}
-        : ($self->{builder});
+    my @builders;
+    if (ref $self->{builder} eq "ARRAY") {
+        my %unique = map { $_ => 1 } @{$self->{builder}};
+        @builders = keys %unique;
+    } else {
+        @builders = ($self->{builder});
+    }
 
     # this block should be pulled out to its own sub
     my @build_instructions;
@@ -271,7 +274,7 @@ sub function2 {
 
 \=head1 AUTHOR
 
-$self->{author}, C<< <$self->{email}> >>
+$self->{author}, C<< <$self->{email_obfuscated}> >>
 
 \=head1 BUGS
 
@@ -317,6 +320,9 @@ sub _create_module {
     }
 
     my $module_file = File::Spec->catfile( @dirparts,  $filepart );
+
+    $self->{module_file}{$module} =
+        File::Spec->catfile('lib', @parts, $filepart);
 
     open( my $fh, ">", $module_file ) or die "Can't create $module_file: $!\n";
     print $fh $self->module_guts( $module, $rtname );
@@ -444,7 +450,7 @@ my \$builder = Module::Build->new(
     license             => '$self->{license}',
     dist_author         => '$author',
     dist_version_from   => '$main_pm_file',
-    requires => {
+    build_requires => {
         'Test::More' => 0,
     },
     add_to_cleanup      => [ '$self->{distro}-*' ],
@@ -621,6 +627,60 @@ $use_lines
 diag( "Testing $main_module \$${main_module}::VERSION, Perl \$], \$^X" );
 HERE
 
+    my $boilerplate_tests = @modules + 2 + $[;
+    $t_files{'boilerplate.t'} = <<"HERE";
+#!perl -T
+
+use strict;
+use warnings;
+use Test::More tests => $boilerplate_tests;
+
+sub not_in_file_ok {
+    my (\$filename, \%regex) = \@_;
+    open my \$fh, "<", \$filename
+        or die "couldn't open \$filename for reading: \$!";
+    
+    my \%violated;
+    
+    while (my \$line = <\$fh>) {
+        while (my (\$desc, \$regex) = each \%regex) {
+            if (\$line =~ \$regex) {
+                push \@{\$violated{\$desc}||=[]}, \$.;
+            }
+        }
+    }
+
+    if (\%violated) {
+        fail("\$filename contains boilerplate text");
+        diag "\$_ appears on lines \@{\$violated{\$_}}" for keys \%violated;
+    } else {
+        pass("\$filename contains no boilerplate text");
+    }
+}
+
+not_in_file_ok(README =>
+    "The README is used..."       => qr/The README is used/,
+    "'version information here'"  => qr/to provide version information/,
+);
+
+not_in_file_ok(Changes =>
+    "placeholder date/time"       => qr(Date/time)
+);
+
+sub module_boilerplate_ok {
+    my (\$module) = \@_;
+    not_in_file_ok(\$module =>
+        'the great new \$MODULENAME'   => qr/ - The great new /,
+        'boilerplate description'     => qr/Quick summary of what the module/,
+        'stub function definition'    => qr/function[12]/,
+    );
+}
+
+HERE
+
+    $t_files{'boilerplate.t'}
+        .= "module_boilerplate_ok('$self->{module_file}{$_}');\n" for @modules;
+
     return %t_files;
 }
 
@@ -698,7 +758,7 @@ sub create_cvsignore {
     open( my $fh, ">", $fname ) or die "Can't create $fname: $!\n";
     print $fh $self->cvsignore_guts();
     close $fh;
-    $self->progress( "Created .cvsignore" );
+    $self->progress( "Created $fname" );
 
     return; # Not a file that goes in the MANIFEST
 }
@@ -727,7 +787,7 @@ cover_db
 HERE
 }
 
-=head1 Helper Methods
+=head1 HELPER METHODS
 
 =head2 verbose
 
@@ -751,14 +811,14 @@ sub progress {
     return;
 }
 
-=head1 Bugs
+=head1 BUGS
 
 Please report any bugs or feature requests to
-C<bug-module-starter@rt.cpan.org>, or through the web interface at
+C<bug-module-starter at rt.cpan.org>, or through the web interface at
 L<http://rt.cpan.org>.  I will be notified, and then you'll automatically
 be notified of progress on your bug as I make changes.
 
-=head1 Author
+=head1 AUTHOR
 
 Andy Lester, C<< <andy@petdance.com> >>
 

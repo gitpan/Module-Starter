@@ -1,7 +1,7 @@
 package Module::Starter;
 # vi:et:sw=4 ts=4
 
-our $VERSION = '1.40';
+our $VERSION = '1.41_01';
 
 use warnings;
 use strict;
@@ -12,9 +12,9 @@ Module::Starter - a simple starter kit for any module
 
 =head1 VERSION
 
-Version 1.40
+Version 1.41_01
 
-    $Id: Starter.pm 26 2005-07-07 02:40:02Z rjbs $
+    $Id: /my/petdance/ms/trunk/lib/Module/Starter.pm 14306 2005-08-24T01:06:35.060784Z rjbs  $
 
 =head1 SYNOPSIS
 
@@ -76,36 +76,40 @@ For more information, refer to L<Module::Starter::Plugin>.
 
 sub import {
     my $class = shift;
-    my @plugins = @_ ? @_ : 'Module::Starter::Simple';
+    my @plugins = ((@_ ? @_ : 'Module::Starter::Simple'), $class);
     my $parent;
 
     no strict 'refs';
-    for (@plugins, $class) {
-        if ($parent) {
-            eval "require $parent;"; 
-            die "couldn't load plugin $parent: $@" if $@;
-            push @{"${_}::ISA"}, $parent;
-        }
-        $parent = $_;
+    while (my $child = shift @plugins) {
+        eval "require $child;"; 
+        die "couldn't load plugin $child: $@" if $@;
+
+        push @{"${child}::ISA"}, $parent if $parent;
+
+        if ($child->can("load_plugins") and @plugins) {
+            $parent->load_plugins(@plugins);
+            last;
+        } 
+        $parent = $child;
     }
 }
 
 =head1 AUTHORS
 
-Andy Lester, C<< <petdance@cpan.org> >>
+Andy Lester, C<< <petdance at cpan.org> >>
 
-Ricardo Signes, C<< <rjbs@cpan.org> >>
+Ricardo Signes, C<< <rjbs at cpan.org> >>
 
 =head1 BUGS
 
 Please report any bugs or feature requests to
-C<bug-module-starter@rt.cpan.org>, or through the web interface at
+C<bug-module-starter at rt.cpan.org>, or through the web interface at
 L<http://rt.cpan.org>.  I will be notified, and then you'll automatically be
 notified of progress on your bug as I make changes.
 
 =head1 COPYRIGHT
 
-Copyright 2004 Andy Lester, All Rights Reserved.
+Copyright 2005 Andy Lester and Ricardo Signes, All Rights Reserved.
 
 This program is free software; you can redistribute it and/or modify it
 under the same terms as Perl itself.

@@ -1,7 +1,7 @@
 # http://module-build.sourceforge.net/META-spec.html
 #XXXXXXX This is a prototype!!!  It will change in the future!!! XXXXX#
 name:         Module-Starter
-version:      1.40
+version:      1.41_01
 version_from: lib/Module/Starter.pm
 installdirs:  site
 requires:

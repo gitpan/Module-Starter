@@ -12,7 +12,7 @@ Module::Starter::Plugin::Template - module starter with templates
 
 Version 0.02
 
-    $Id: Template.pm 17 2005-03-08 18:24:35Z rjbs $
+    $Id: /my/petdance/ms/trunk/lib/Module/Starter/Plugin/Template.pm 2677 2005-08-20T04:00:44.121762Z andy  $
 
 =cut
 
@@ -221,18 +221,18 @@ sub cvsignore_guts {
 
 =head1 AUTHOR
 
-Ricardo SIGNES, C<< <rjbs@cpan.org> >>
+Ricardo SIGNES, C<< <rjbs at cpan.org> >>
 
 =head1 Bugs
 
 Please report any bugs or feature requests to
-C<bug-module-starter@rt.cpan.org>, or through the web interface at
+C<bug-module-starter at rt.cpan.org>, or through the web interface at
 L<http://rt.cpan.org>.  I will be notified, and then you'll automatically be
 notified of progress on your bug as I make changes.
 
 =head1 COPYRIGHT
 
-Copyright 2004 Ricardo SIGNES, All Rights Reserved.
+Copyright 2005 Ricardo SIGNES, All Rights Reserved.
 
 This program is free software; you can redistribute it and/or modify it
 under the same terms as Perl itself.
