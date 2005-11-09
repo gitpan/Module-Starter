@@ -1,8 +1,6 @@
 package Module::Starter;
 # vi:et:sw=4 ts=4
 
-our $VERSION = '1.41_01';
-
 use warnings;
 use strict;
 
@@ -12,9 +10,11 @@ Module::Starter - a simple starter kit for any module
 
 =head1 VERSION
 
-Version 1.41_01
+Version 1.42
 
-    $Id: /my/petdance/ms/trunk/lib/Module/Starter.pm 14306 2005-08-24T01:06:35.060784Z rjbs  $
+=cut
+
+our $VERSION = '1.42';
 
 =head1 SYNOPSIS
 
@@ -99,6 +99,34 @@ sub import {
 Andy Lester, C<< <petdance at cpan.org> >>
 
 Ricardo Signes, C<< <rjbs at cpan.org> >>
+
+=head1 SUPPORT
+
+You can find documentation for this module with the perldoc command.
+
+    perldoc Module::Starter
+
+    You can also look for information at:
+
+=over 4
+
+=item * AnnoCPAN: Annotated CPAN documentation
+
+L<http://annocpan.org/dist/Module-Starter>
+
+=item * CPAN Ratings
+
+L<http://cpanratings.perl.org/d/Module-Starter>
+
+=item * RT: CPAN's request tracker
+
+L<http://rt.cpan.org/NoAuth/Bugs.html?Dist=Module-Starter>
+
+=item * Search CPAN
+
+L<http://search.cpan.org/dist/Module-Starter>
+
+=back
 
 =head1 BUGS
 

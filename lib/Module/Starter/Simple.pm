@@ -12,11 +12,11 @@ Module::Starter::Simple - a simple, comprehensive Module::Starter plugin
 
 =head1 VERSION
 
-Version 1.41_01
+Version 1.42
 
 =cut
 
-our $VERSION = '1.41_01';
+our $VERSION = '1.42';
 
 =head1 SYNOPSIS
 
@@ -57,8 +57,9 @@ sub create_distro {
 
     $self->{license} ||= 'perl';
 
-    if ( not defined $self->{distro} ) {
-        $self->{distro} = $modules[0];
+    $self->{main_module} = $modules[0];
+    if ( not $self->{distro} ) {
+        $self->{distro} = $self->{main_module};
         $self->{distro} =~ s/::/-/g;
     }
 
@@ -75,7 +76,8 @@ sub create_distro {
     if (ref $self->{builder} eq "ARRAY") {
         my %unique = map { $_ => 1 } @{$self->{builder}};
         @builders = keys %unique;
-    } else {
+    }
+    else {
         @builders = ($self->{builder});
     }
 
@@ -85,19 +87,21 @@ sub create_distro {
         next unless $builder;
         if ( !@build_instructions ) {
             push @build_instructions, "To install this module, run the following commands:";
-        } else {
+        }
+        else {
             push @build_instructions, "Alternatively, to install with $builder, you can use the following commands:";
         }
         if ( $builder eq 'Module::Build' ) {
-            push @files, $self->create_Build_PL( $modules[0] );
+            push @files, $self->create_Build_PL( $self->{main_module} );
             push @build_instructions, <<'HERE';
     perl Build.PL
     ./Build
     ./Build test
     ./Build install
 HERE
-        } else {
-            push @files, $self->create_Makefile_PL( $modules[0] );
+        }
+        else {
+            push @files, $self->create_Makefile_PL( $self->{main_module} );
             push @build_instructions, <<'HERE';
     perl Makefile.PL
     make
@@ -279,10 +283,38 @@ $self->{author}, C<< <$self->{email_obfuscated}> >>
 \=head1 BUGS
 
 Please report any bugs or feature requests to
-C<bug-$rtname\@rt.cpan.org>, or through the web interface at
+C<bug-$rtname at rt.cpan.org>, or through the web interface at
 L<http://rt.cpan.org/NoAuth/ReportBug.html?Queue=$self->{distro}>.
 I will be notified, and then you'll automatically be notified of progress on
 your bug as I make changes.
+
+\=head1 SUPPORT
+
+You can find documentation for this module with the perldoc command.
+
+    perldoc $self->{main_module}
+
+You can also look for information at:
+
+\=over 4
+
+\=item * AnnoCPAN: Annotated CPAN documentation
+
+L<http://annocpan.org/dist/$self->{distro}>
+
+\=item * CPAN Ratings
+
+L<http://cpanratings.perl.org/d/$self->{distro}>
+
+\=item * RT: CPAN's request tracker
+
+L<http://rt.cpan.org/NoAuth/Bugs.html?Dist=$self->{distro}>
+
+\=item * Search CPAN
+
+L<http://search.cpan.org/dist/$self->{distro}>
+
+\=back
 
 \=head1 ACKNOWLEDGEMENTS
 
@@ -551,6 +583,26 @@ INSTALLATION
 
 $build_instructions
 
+SUPPORT AND DOCUMENTATION
+
+After installing, you can find documentation for this module with the perldoc command.
+
+    perldoc $self->{main_module}
+
+You can also look for information at:
+
+    Search CPAN
+        http://search.cpan.org/dist/$self->{distro}
+
+    CPAN Request Tracker:
+        http://rt.cpan.org/NoAuth/Bugs.html?Dist=$self->{distro}
+
+    AnnoCPAN, annotated CPAN documentation:
+        http://annocpan.org/dist/$self->{distro}
+
+    CPAN Ratings:
+        http://cpanratings.perl.org/d/$self->{distro}
+
 COPYRIGHT AND LICENCE
 
 Copyright (C) $year $self->{author}
@@ -639,9 +691,9 @@ sub not_in_file_ok {
     my (\$filename, \%regex) = \@_;
     open my \$fh, "<", \$filename
         or die "couldn't open \$filename for reading: \$!";
-    
+
     my \%violated;
-    
+
     while (my \$line = <\$fh>) {
         while (my (\$desc, \$regex) = each \%regex) {
             if (\$line =~ \$regex) {

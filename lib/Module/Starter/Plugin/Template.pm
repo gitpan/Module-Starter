@@ -12,7 +12,7 @@ Module::Starter::Plugin::Template - module starter with templates
 
 Version 0.02
 
-    $Id: /my/petdance/ms/trunk/lib/Module/Starter/Plugin/Template.pm 2677 2005-08-20T04:00:44.121762Z andy  $
+    $Id: Template.pm 30 2005-08-20 04:00:44Z andy $
 
 =cut
 
