@@ -3,6 +3,7 @@ package Module::Starter::Plugin::Template;
 
 use warnings;
 use strict;
+use Carp qw( confess );
 
 =head1 NAME
 
@@ -12,7 +13,7 @@ Module::Starter::Plugin::Template - module starter with templates
 
 Version 0.02
 
-    $Id: Template.pm 30 2005-08-20 04:00:44Z andy $
+    $Id: Template.pm 54 2007-02-06 22:04:46Z andy $
 
 =cut
 
@@ -48,7 +49,7 @@ sub new {
     my $self  = $class->SUPER::new(@_);
     $self->{templates} = { $self->templates };
     $self->{renderer} = $self->renderer;
-    bless $self => $class;
+    return bless $self => $class;
 }
 
 =head1 OBJECT METHODS
@@ -57,13 +58,13 @@ sub new {
 
 This method is used to initialize the template store on the Module::Starter
 object.  It returns a hash of templates; each key is a filename and each value
-is the body of the template.  The filename "Module.pm" is used for the module
+is the body of the template.  The filename F<Module.pm> is used for the module
 template.
 
 =cut
 
 sub templates {
-    die "attempted to use abstract base templates method";
+    confess 'attempted to use abstract base templates method';
 }
 
 =head2 C<< renderer() >>
@@ -74,7 +75,7 @@ in the object's C<renderer> entry.  The implementation will determine its use.
 =cut
 
 sub renderer {
-    die "attempted to use abstract base renderer method";
+    confess 'attempted to use abstract base renderer method';
 }
 
 =head2 C<< render($template, \%options) >>
@@ -89,7 +90,7 @@ sub render {
     my $template = shift;
     my $options = shift;
 
-    die "attempted to use abstract base render method";
+    confess 'attempted to use abstract base render method';
 }
 
 =head2 _guts methods
@@ -122,6 +123,8 @@ sub module_guts {
 
     my $template = $self->{templates}{'Module.pm'};
     $self->render($template, \%options);
+
+    return;
 }
 
 =item Makefile_PL_guts
@@ -135,6 +138,8 @@ sub Makefile_PL_guts {
 
     my $template = $self->{templates}{'Makefile.PL'};
     $self->render($template, \%options);
+
+    return;
 }
 
 =item Build_PL_guts
@@ -148,6 +153,8 @@ sub Build_PL_guts {
 
     my $template = $self->{templates}{'Build.PL'};
     $self->render($template, \%options);
+
+    return;
 }
 
 =item Changes_guts
@@ -159,6 +166,8 @@ sub Changes_guts {
 
     my $template = $self->{templates}{'Changes'};
     $self->render($template);
+
+    return;
 }
 
 =item README_guts
@@ -172,6 +181,8 @@ sub README_guts {
 
     my $template = $self->{templates}{'README'};
     $self->render($template, \%options);
+
+    return;
 }
 
 =item t_guts
@@ -185,7 +196,7 @@ sub t_guts {
 
     my %t_files;
 
-    foreach (grep /\.t$/, keys %{$self->{templates}}) {
+    foreach (grep { /\.t$/ } keys %{$self->{templates}}) {
         my $template = $self->{templates}{$_};
         $t_files{$_} = $self->render($template, \%options);
     }
@@ -204,6 +215,8 @@ sub MANIFEST_guts {
 
     my $template = $self->{templates}{MANIFEST};
     $self->render($template, \%options);
+
+    return;
 }
 
 =item item cvsignore_guts
@@ -215,6 +228,8 @@ sub cvsignore_guts {
 
     my $template = $self->{templates}{cvsignore};
     $self->render($template);
+
+    return;
 }
 
 =back
@@ -232,7 +247,7 @@ notified of progress on your bug as I make changes.
 
 =head1 COPYRIGHT
 
-Copyright 2005 Ricardo SIGNES, All Rights Reserved.
+Copyright 2005-2007 Ricardo SIGNES, All Rights Reserved.
 
 This program is free software; you can redistribute it and/or modify it
 under the same terms as Perl itself.

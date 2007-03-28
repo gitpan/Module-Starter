@@ -1,4 +1,4 @@
-# vi:et:sw=4 ts=4
+# vi:et:sw=4 softtabstop=4
 use strict;
 use warnings;
 use 5.6.1;
@@ -20,3 +20,21 @@ WriteMakefile(
     dist                => { COMPRESS => 'gzip -9f', SUFFIX => 'gz', },
     clean               => { FILES => 'Module-Release-*' },
 );
+
+sub MY::postamble {
+    my $postamble = <<'MAKE_FRAG';
+.PHONY: tags critic
+
+tags:
+	ctags -f tags --recurse --totals \
+		--exclude=blib \
+		--exclude=.svn \
+		--exclude='*~' \
+		--languages=Perl --langmap=Perl:+.t \
+
+critic:
+	perlcritic -1 -q -profile perlcriticrc bin/ lib/ t/
+MAKE_FRAG
+
+    return $postamble;
+}

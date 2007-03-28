@@ -3,6 +3,7 @@ package Module::Starter;
 
 use warnings;
 use strict;
+use Carp qw( croak );
 
 =head1 NAME
 
@@ -10,11 +11,11 @@ Module::Starter - a simple starter kit for any module
 
 =head1 VERSION
 
-Version 1.42
+Version 1.43_01
 
 =cut
 
-our $VERSION = '1.42';
+our $VERSION = '1.43_01';
 
 =head1 SYNOPSIS
 
@@ -34,11 +35,9 @@ Module::Starter is used to create a skeletal CPAN distribution, including basic
 builder scripts, tests, documentation, and module code.  This is done through
 just one method, C<create_distro>.
 
-=head1 METHODS 
+=head1 METHODS
 
-=over 4
-
-=item C<< Module::Starter->create_distro(%args) >>
+=head2 Module::Starter->create_distro(%args)
 
 C<create_distro> is the only method you should need to use from outside this
 module; all the other methods are called internally by this one.
@@ -62,8 +61,6 @@ It takes a hash of params, as follows:
     verbose => $verbose,  # bool: print progress messages; defaults to 0
     force   => $force     # bool: overwrite existing files; defaults to 0
 
-=back
-
 =head1 PLUGINS
 
 Module::Starter itself doesn't actually do anything.  It must load plugins that
@@ -79,19 +76,21 @@ sub import {
     my @plugins = ((@_ ? @_ : 'Module::Starter::Simple'), $class);
     my $parent;
 
-    no strict 'refs';
     while (my $child = shift @plugins) {
-        eval "require $child;"; 
-        die "couldn't load plugin $child: $@" if $@;
+        eval "require $child";
+        croak "couldn't load plugin $child: $@" if $@;
 
+        no strict 'refs';
         push @{"${child}::ISA"}, $parent if $parent;
 
-        if ($child->can("load_plugins") and @plugins) {
+        if ( @plugins && $child->can('load_plugins') ) {
             $parent->load_plugins(@plugins);
             last;
-        } 
+        }
         $parent = $child;
     }
+
+    return;
 }
 
 =head1 AUTHORS
@@ -109,6 +108,10 @@ You can find documentation for this module with the perldoc command.
     You can also look for information at:
 
 =over 4
+
+=item * Source code at Google Code
+
+L<http://code.google.com/p/module-starter/>
 
 =item * AnnoCPAN: Annotated CPAN documentation
 
@@ -137,7 +140,7 @@ notified of progress on your bug as I make changes.
 
 =head1 COPYRIGHT
 
-Copyright 2005 Andy Lester and Ricardo Signes, All Rights Reserved.
+Copyright 2005-2007 Andy Lester and Ricardo Signes, All Rights Reserved.
 
 This program is free software; you can redistribute it and/or modify it
 under the same terms as Perl itself.
