@@ -1,7 +1,7 @@
 # vi:et:sw=4 softtabstop=4
 use strict;
 use warnings;
-use 5.6.1;
+use 5.006001;
 use ExtUtils::MakeMaker;
 
 WriteMakefile(
@@ -12,6 +12,8 @@ WriteMakefile(
     EXE_FILES           => [ 'bin/module-starter' ],
     PREREQ_PM => {
         'Test::More'            => 0,
+        'Test::Pod'             => 1.22,
+        'Test::Pod::Coverage'   => 1.08,
         'ExtUtils::Command'     => 0,
         'File::Spec'            => 0,
         'Getopt::Long'          => 0,
@@ -33,7 +35,7 @@ tags:
 		--languages=Perl --langmap=Perl:+.t \
 
 critic:
-	perlcritic -1 -q -profile perlcriticrc bin/ lib/ t/
+	perlcritic -verbose "%f: [%p] %m at line %l, near '%r'.  (Severity: %s)\n" -q -profile perlcriticrc lib/ bin/ t/
 MAKE_FRAG
 
     return $postamble;
