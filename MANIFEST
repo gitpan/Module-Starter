@@ -1,10 +1,10 @@
 README
 MANIFEST
-META.yml
 Changes
 Makefile.PL
 bin/module-starter
 lib/Module/Starter.pm
+lib/Module/Starter/App.pm
 lib/Module/Starter/Simple.pm
 lib/Module/Starter/BuilderSet.pm
 lib/Module/Starter/Plugin.pod
@@ -26,3 +26,4 @@ t/data/templates/Build.PL
 t/data/templates/README
 perlcriticrc
 
+META.yml                                 Module meta-data (added by MakeMaker)
