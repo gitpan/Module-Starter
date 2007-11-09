@@ -1,6 +1,6 @@
 --- #YAML:1.0
 name:                Module-Starter
-version:             1.46
+version:             1.470
 abstract:            a simple starter kit for any module
 license:             perl
 generated_by:        ExtUtils::MakeMaker version 6.36_01
