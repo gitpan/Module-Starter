@@ -1,7 +1,9 @@
-README
-MANIFEST
 Changes
+getting-started.html
+MANIFEST
 Makefile.PL
+README
+
 bin/module-starter
 lib/Module/Starter.pm
 lib/Module/Starter/App.pm
@@ -13,6 +15,7 @@ t/00-load.t
 t/pod-coverage.t
 t/pod.t
 t/module-starter.t
+t/test-dist.t
 t/BuilderSet.t
 t/lib/Module/Starter/TestPlugin.pm
 t/data/templates/Module.pm
@@ -25,5 +28,4 @@ t/data/templates/Changes
 t/data/templates/Build.PL
 t/data/templates/README
 perlcriticrc
-
 META.yml                                 Module meta-data (added by MakeMaker)
