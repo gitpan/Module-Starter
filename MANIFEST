@@ -27,5 +27,6 @@ t/data/templates/Makefile.PL
 t/data/templates/Changes
 t/data/templates/Build.PL
 t/data/templates/README
+t/test-dist.t
 perlcriticrc
 META.yml                                 Module meta-data (added by MakeMaker)

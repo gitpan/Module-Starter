@@ -11,11 +11,11 @@ Module::Starter::Plugin::Template - module starter with templates
 
 =head1 VERSION
 
-Version 1.50
+Version 1.52
 
 =cut
 
-our $VERSION = '1.50';
+our $VERSION = '1.52';
 
 =head1 SYNOPSIS
 
@@ -218,14 +218,14 @@ sub MANIFEST_guts {
     $self->render($template, \%options);
 }
 
-=item item cvsignore_guts
+=item item ignores_guts
 
 =cut
 
-sub cvsignore_guts {
+sub ignores_guts {
     my $self = shift;
 
-    my $template = $self->{templates}{cvsignore};
+    my $template = $self->{templates}{ignores};
     $self->render($template);
 }
 

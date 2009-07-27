@@ -16,11 +16,11 @@ Module::Starter::Simple - a simple, comprehensive Module::Starter plugin
 
 =head1 VERSION
 
-Version 1.50
+Version 1.52
 
 =cut
 
-our $VERSION = '1.50';
+our $VERSION = '1.52';
 
 =head1 SYNOPSIS
 
@@ -74,7 +74,7 @@ sub create_distro {
     push @files, $self->create_modules( @modules );
 
     push @files, $self->create_t( @modules );
-    push @files, $self->create_cvsignore;
+    push @files, $self->create_ignores;
     my %build_results = $self->create_build();
     push(@files, @{ $build_results{files} } );
 
@@ -96,8 +96,8 @@ the attention of subclass authors.
 =cut
 
 sub new {
-  my $class = shift;
-  return bless { @_ } => $class;
+    my $class = shift;
+    return bless { @_ } => $class;
 }
 
 =head1 OBJECT METHODS
@@ -174,15 +174,144 @@ method eventually.)
 
 =cut
 
+sub _get_licenses_mapping {
+    my $self = shift;
+
+    return
+    [
+    {
+        license => 'perl',
+        blurb => <<'EOT',
+This program is free software; you can redistribute it and/or modify it
+under the terms of either: the GNU General Public License as published
+by the Free Software Foundation; or the Artistic License.
+
+See http://dev.perl.org/licenses/ for more information.
+EOT
+    },
+    {
+        license => 'mit',
+        blurb => <<'EOT',
+This program is distributed under the MIT (X11) License:
+L<http://www.opensource.org/licenses/mit-license.php>
+
+Permission is hereby granted, free of charge, to any person
+obtaining a copy of this software and associated documentation
+files (the "Software"), to deal in the Software without
+restriction, including without limitation the rights to use,
+copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the
+Software is furnished to do so, subject to the following
+conditions:
+
+The above copyright notice and this permission notice shall be
+included in all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES
+OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
+NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT
+HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
+WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
+OTHER DEALINGS IN THE SOFTWARE.
+EOT
+    },
+    {
+        license => 'bsd',
+        blurb => <<"EOT",
+This program is distributed under the (Revised) BSD License:
+L<http://www.opensource.org/licenses/bsd-license.php>
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions
+are met:
+
+* Redistributions of source code must retain the above copyright
+notice, this list of conditions and the following disclaimer.
+
+* Redistributions in binary form must reproduce the above copyright
+notice, this list of conditions and the following disclaimer in the
+documentation and/or other materials provided with the distribution.
+
+* Neither the name of @{[$self->{author}]}'s Organization
+nor the names of its contributors may be used to endorse or promote
+products derived from this software without specific prior written
+permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+"AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
+OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+EOT
+    },
+    {
+        license => 'gpl',
+        blurb => <<'EOT',
+This program is free software; you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation; version 2 dated June, 1991 or at your option
+any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+A copy of the GNU General Public License is available in the source tree;
+if not, write to the Free Software Foundation, Inc.,
+59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
+EOT
+    },
+    {
+        license => 'lgpl',
+        blurb => <<'EOT',
+This program is free software; you can redistribute it and/or
+modify it under the terms of the GNU Lesser General Public
+License as published by the Free Software Foundation; either
+version 2.1 of the License, or (at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+Lesser General Public License for more details.
+
+You should have received a copy of the GNU Lesser General Public
+License along with this program; if not, write to the Free
+Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
+02111-1307 USA.
+EOT
+    },
+    ];
+}
+
+sub _license_record {
+    my $self = shift;
+
+    foreach my $record (@{$self->_get_licenses_mapping()}) {
+        if ($record->{license} eq $self->{license}) {
+            return $record;
+        }
+    }
+
+    return;
+}
+
 sub _license_blurb {
     my $self = shift;
-    my $license_blurb;
 
-    if ($self->{license} eq 'perl') {
-        $license_blurb = <<'EOT';
-This program is free software; you can redistribute it and/or modify it
-under the same terms as Perl itself.
-EOT
+    my $record = $self->_license_record();
+
+    my $license_blurb;
+    if (defined($record)) {
+        $license_blurb = $record->{blurb};
     }
     else {
         $license_blurb = <<"EOT";
@@ -240,8 +369,8 @@ sub _module_to_pm_file {
 }
 
 sub _reference_links {
-  return
-    ( { nickname => 'RT',
+  return (
+      { nickname => 'RT',
         title    => 'CPAN\'s request tracker',
         link     => 'http://rt.cpan.org/NoAuth/Bugs.html?Dist=%s',
       },
@@ -270,15 +399,15 @@ sub create_Makefile_PL {
     my $main_module  = shift;
     my $builder_name = 'ExtUtils::MakeMaker';
     my $output_file  =
-      Module::Starter::BuilderSet->new()->file_for_builder($builder_name);
+    Module::Starter::BuilderSet->new()->file_for_builder($builder_name);
     my $fname        = File::Spec->catfile( $self->{basedir}, $output_file );
 
     $self->create_file(
-      $fname,
-      $self->Makefile_PL_guts(
-        $main_module,
-        $self->_module_to_pm_file($main_module),
-      ),
+        $fname,
+        $self->Makefile_PL_guts(
+            $main_module,
+            $self->_module_to_pm_file($main_module),
+        ),
     );
 
     $self->progress( "Created $fname" );
@@ -302,11 +431,11 @@ sub create_MI_Makefile_PL {
     my $fname        = File::Spec->catfile( $self->{basedir}, $output_file );
 
     $self->create_file(
-      $fname,
-      $self->MI_Makefile_PL_guts(
-        $main_module,
-        $self->_module_to_pm_file($main_module),
-      ),
+        $fname,
+        $self->MI_Makefile_PL_guts(
+            $main_module,
+            $self->_module_to_pm_file($main_module),
+        ),
     );
 
     $self->progress( "Created $fname" );
@@ -336,7 +465,7 @@ use ExtUtils::MakeMaker;
 
 WriteMakefile(
     NAME                => '$main_module',
-    AUTHOR              => '$author',
+    AUTHOR              => q{$author},
     VERSION_FROM        => '$main_pm_file',
     ABSTRACT_FROM       => '$main_pm_file',
     (\$ExtUtils::MakeMaker::VERSION >= 6.3002
@@ -366,14 +495,15 @@ sub MI_Makefile_PL_guts {
     my $main_module = shift;
     my $main_pm_file = shift;
 
-    (my $author = "$self->{author} <$self->{email}>") =~ s/'/\'/g;
+    my $author = "$self->{author} <$self->{email}>";
+    $author =~ s/'/\'/g;
 
     return <<"HERE";
 use inc::Module::Install;
 
 name     '$self->{distro}';
 all_from '$main_pm_file';
-author   '$author';
+author   q{$author};
 license  '$self->{license}';
 
 build_requires 'Test::More';
@@ -402,11 +532,11 @@ sub create_Build_PL {
     my $fname        = File::Spec->catfile( $self->{basedir}, $output_file );
 
     $self->create_file(
-      $fname,
-      $self->Build_PL_guts(
-        $main_module,
-        $self->_module_to_pm_file($main_module),
-      ),
+        $fname,
+        $self->Build_PL_guts(
+            $main_module,
+            $self->_module_to_pm_file($main_module),
+        ),
     );
 
     $self->progress( "Created $fname" );
@@ -437,7 +567,7 @@ use Module::Build;
 my \$builder = Module::Build->new(
     module_name         => '$main_module',
     license             => '$self->{license}',
-    dist_author         => '$author',
+    dist_author         => q{$author},
     dist_version_from   => '$main_pm_file',
     build_requires => {
         'Test::More' => 0,
@@ -533,12 +663,12 @@ sub _README_information {
     my $content = "You can also look for information at:\n";
 
     foreach my $ref (@reference_links){
-      my $title;
-      $title = "$ref->{nickname}, " if exists $ref->{nickname};
-      $title .= $ref->{title};
-      my $link  = sprintf($ref->{link}, $self->{distro});
+        my $title;
+        $title = "$ref->{nickname}, " if exists $ref->{nickname};
+        $title .= $ref->{title};
+        my $link  = sprintf($ref->{link}, $self->{distro});
 
-      $content .= qq[
+        $content .= qq[
     $title
         $link
 ];
@@ -664,7 +794,7 @@ HERE
 
     my $nmodules = @modules;
     my $main_module = $modules[0];
-    my $use_lines = join( "\n", map { "\tuse_ok( '$_' );" } @modules );
+    my $use_lines = join( "\n", map { "    use_ok( '$_' );" } @modules );
 
     $t_files{'00-load.t'} = <<"HERE";
 #!perl -T
@@ -680,7 +810,7 @@ HERE
 
     my $module_boilerplate_tests;
     $module_boilerplate_tests .=
-      "  module_boilerplate_ok('$self->{module_file}{$_}');\n" for @modules;
+      "  module_boilerplate_ok('".$self->_module_to_pm_file($_)."');\n" for @modules;
 
     my $boilerplate_tests = @modules + 2 + $[;
     $t_files{'boilerplate.t'} = <<"HERE";
@@ -808,79 +938,82 @@ Module::Install
 =cut
 
 sub create_build {
-  my $self = shift;
+    my $self = shift;
 
-  # pass one: pull the builders out of $self->{builder}
-  my @tmp =
+    # pass one: pull the builders out of $self->{builder}
+    my @tmp =
     ref $self->{builder} eq 'ARRAY' ? @{$self->{builder}} : $self->{builder};
 
-  my @builders;
-  my $COMMA = q{,};
-  # pass two: expand comma-delimited builder lists
-  foreach my $builder (@tmp) {
-    push( @builders, split($COMMA, $builder) );
-  }
-
-  my $builder_set = Module::Starter::BuilderSet->new();
-
-  # Remove mutually exclusive and unsupported builders
-  @builders = $builder_set->check_compatibility( @builders );
-
-  # compile some build instructions, create a list of files generated
-  # by the builders' create_* methods, and call said methods
-
-  my @build_instructions;
-  my @files;
-
-  foreach my $builder ( @builders ) {
-    if ( !@build_instructions ) {
-      push( @build_instructions,
-            'To install this module, run the following commands:'
-          );
-    } else {
-      push( @build_instructions,
-            "Alternatively, to install with $builder, you can ".
-            "use the following commands:"
-          );
+    my @builders;
+    my $COMMA = q{,};
+    # pass two: expand comma-delimited builder lists
+    foreach my $builder (@tmp) {
+        push( @builders, split($COMMA, $builder) );
     }
-    push( @files, $builder_set->file_for_builder($builder) );
-    my @commands = $builder_set->instructions_for_builder($builder);
-    push( @build_instructions, join("\n", map { "\t$_" } @commands) );
 
-    my $build_method = $builder_set->method_for_builder($builder);
-    $self->$build_method($self->{main_module})
-  }
+    my $builder_set = Module::Starter::BuilderSet->new();
 
-  return( files        => [ @files ],
-          instructions => join( "\n\n", @build_instructions ),
-        );
+    # Remove mutually exclusive and unsupported builders
+    @builders = $builder_set->check_compatibility( @builders );
+
+    # compile some build instructions, create a list of files generated
+    # by the builders' create_* methods, and call said methods
+
+    my @build_instructions;
+    my @files;
+
+    foreach my $builder ( @builders ) {
+        if ( !@build_instructions ) {
+            push( @build_instructions,
+                'To install this module, run the following commands:'
+            );
+        }
+        else {
+            push( @build_instructions,
+                "Alternatively, to install with $builder, you can ".
+                "use the following commands:"
+            );
+        }
+        push( @files, $builder_set->file_for_builder($builder) );
+        my @commands = $builder_set->instructions_for_builder($builder);
+        push( @build_instructions, join("\n", map { "\t$_" } @commands) );
+
+        my $build_method = $builder_set->method_for_builder($builder);
+        $self->$build_method($self->{main_module})
+    }
+
+    return(
+        files        => [ @files ],
+        instructions => join( "\n\n", @build_instructions ),
+    );
 }
 
-=head2 create_cvsignore( )
 
-This creates a .cvsignore file in the distribution's directory so that your CVS
-knows to ignore certain files.
+=head2 create_ignores()
+
+This creates an ignore.txt file for use as MANIFEST.SKIP, .cvsignore,
+.gitignore, or whatever you use.
 
 =cut
 
-sub create_cvsignore {
+sub create_ignores {
     my $self = shift;
 
-    my $fname = File::Spec->catfile( $self->{basedir}, '.cvsignore' );
-    $self->create_file( $fname, $self->cvsignore_guts() );
+    my $fname = File::Spec->catfile( $self->{basedir}, 'ignore.txt' );
+    $self->create_file( $fname, $self->ignores_guts() );
     $self->progress( "Created $fname" );
 
     return; # Not a file that goes in the MANIFEST
 }
 
-=head2 cvsignore_guts
+=head2 ignores_guts()
 
-Called by C<create_cvsignore>, this method returns the contents of the
-cvsignore file.
+Called by C<create_ignores>, this method returns the contents of the
+ignore.txt file.
 
 =cut
 
-sub cvsignore_guts {
+sub ignores_guts {
     my $self = shift;
 
     return <<"HERE";
@@ -1032,13 +1165,13 @@ You can also look for information at:
 \=over 4
 ];
 
-    foreach my $ref (@reference_links){
-      my $title;
-      my $link = sprintf($ref->{link}, $self->{distro});
+    foreach my $ref (@reference_links) {
+        my $title;
+        my $link = sprintf($ref->{link}, $self->{distro});
 
-      $title = "$ref->{nickname}: " if exists $ref->{nickname};
-      $title .= $ref->{title};
-      $content .= qq[
+        $title = "$ref->{nickname}: " if exists $ref->{nickname};
+        $title .= $ref->{title};
+        $content .= qq[
 \=item * $title
 
 L<$link>
@@ -1062,7 +1195,7 @@ sub _module_license {
     my $content = qq[
 \=head1 COPYRIGHT & LICENSE
 
-Copyright $year $self->{author}, all rights reserved.
+Copyright $year $self->{author}.
 
 $license_blurb
 ];

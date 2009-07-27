@@ -1,5 +1,26 @@
 Revision history for Perl extension Module::Starter
 
+1.52    Mon Jul 27 01:25:03 CDT 2009
+        * Support for more licenses.  Thanks to Shlomi Fish.
+
+        * Fix slashing problems for Windows.  Thanks Olivier Mengué.
+
+        * Complains about extra unparsed options to try to detect
+        problems that come out of misquoted variables. Thanks to Gunnar Wolf.
+
+        * The list of files to ignore is now called ignore.txt,
+        which you can turn into .cvsignore, .gitignore, MANIFEST.SKIP
+        or whatever.
+
+        * Handles authors with apostrophes in their names better.
+        Thanks to, not surprisingly, Dave O'Neill.
+
+        * Removed module requirements on Test::Pod and Test::Pod::Coverage
+        for Module::Starter to be built and installed.  However,
+        t/pod.t and t/pod-coverage.t do still both get created even
+        if either of their two main modules are not installed.
+
+
 1.50    Tue Oct 28 00:27:37 CDT 2008
         * Added Perl Training Australia's getting-started.html
 
