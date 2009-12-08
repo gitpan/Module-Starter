@@ -13,11 +13,21 @@ WriteMakefile(
     EXE_FILES           => [ 'bin/module-starter' ],
     PREREQ_PM => {
         'Test::More'            => 0,
+        'Test::Harness'         => 0.21,
         'ExtUtils::Command'     => 0,
         'File::Spec'            => 0,
         'Getopt::Long'          => 0,
-        'Pod::Usage'            => 0,
+        'Pod::Usage'            => 1.21,
     },
+    (! eval { ExtUtils::MakeMaker->VERSION(6.46) } ? () :
+        (META_ADD => {
+            resources => {
+                homepage   => 'http://code.google.com/p/module-starter/',
+                repository => 'http://module-starter.googlecode.com/svn/trunk/',
+                bugtracker => 'http://rt.cpan.org/NoAuth/Bugs.html?Dist=Module-Starter',
+            },
+        })
+    ),
     dist                => { COMPRESS => 'gzip -9f', SUFFIX => 'gz', },
     clean               => { FILES => 'Module-Release-*' },
 );

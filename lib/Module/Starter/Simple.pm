@@ -1,5 +1,4 @@
 package Module::Starter::Simple;
-# vi:et:sw=4 ts=4
 
 use strict;
 use warnings;
@@ -16,11 +15,11 @@ Module::Starter::Simple - a simple, comprehensive Module::Starter plugin
 
 =head1 VERSION
 
-Version 1.52
+Version 1.54
 
 =cut
 
-our $VERSION = '1.52';
+our $VERSION = '1.54';
 
 =head1 SYNOPSIS
 
@@ -59,7 +58,8 @@ sub create_distro {
     croak "Must specify an email address\n" unless $self->{email};
     ($self->{email_obfuscated} = $self->{email}) =~ s/@/ at /;
 
-    $self->{license} ||= 'perl';
+    $self->{license}      ||= 'perl';
+    $self->{ignores_type} ||= 'generic';
 
     $self->{main_module} = $modules[0];
     if ( not $self->{distro} ) {
@@ -684,7 +684,7 @@ sub _README_license {
     my $license_blurb = $self->_license_blurb();
 
 return <<"HERE";
-COPYRIGHT AND LICENCE
+LICENSE AND COPYRIGHT
 
 Copyright (C) $year $self->{author}
 
@@ -771,6 +771,22 @@ plan skip_all => "Test::Pod $min_tp required for testing POD" if $@;
 all_pod_files_ok();
 HERE
 
+    $t_files{'manifest.t'} = <<'HERE';
+#!perl -T
+
+use strict;
+use warnings;
+use Test::More;
+
+unless ( $ENV{RELEASE_TESTING} ) {
+    plan( skip_all => "Author tests not required for installation" );
+}
+
+eval "use Test::CheckManifest 0.9";
+plan skip_all => "Test::CheckManifest 0.9 required" if $@;
+ok_manifest();
+HERE
+
     $t_files{'pod-coverage.t'} = <<'HERE';
 use strict;
 use warnings;
@@ -794,7 +810,9 @@ HERE
 
     my $nmodules = @modules;
     my $main_module = $modules[0];
-    my $use_lines = join( "\n", map { "    use_ok( '$_' );" } @modules );
+    my $use_lines = join(
+        "\n", map { qq{    use_ok( '$_' ) || print "Bail out!\n";} } @modules
+    );
 
     $t_files{'00-load.t'} = <<"HERE";
 #!perl -T
@@ -997,11 +1015,30 @@ This creates an ignore.txt file for use as MANIFEST.SKIP, .cvsignore,
 =cut
 
 sub create_ignores {
-    my $self = shift;
+    my $self  = shift;
+    my $type  = $self->{ignores_type};
+    my %names = (
+        cvs      => '.cvsignore',
+        git      => '.gitignore',
+        generic  => 'ignore.txt',
+        manifest => 'MANIFEST.SKIP',
+    );
 
-    my $fname = File::Spec->catfile( $self->{basedir}, 'ignore.txt' );
-    $self->create_file( $fname, $self->ignores_guts() );
-    $self->progress( "Created $fname" );
+    my $create_file = sub {
+        my $type  = shift;
+        my $name  = $names{$type};
+        my $fname = File::Spec->catfile( $self->{basedir}, $names{$type} );
+        $self->create_file( $fname, $self->ignores_guts() );
+        $self->progress( "Created $fname" );
+    };
+
+    if ( ref $type eq 'ARRAY' ) {
+        foreach my $single_type ( @{$type} ) {
+            $create_file->($single_type);
+        }
+    } elsif ( ! ref $type ) {
+        $create_file->($type);
+    }
 
     return; # Not a file that goes in the MANIFEST
 }
@@ -1021,12 +1058,14 @@ blib*
 Makefile
 Makefile.old
 Build
+Build.bat
 _build*
 pm_to_blib*
 *.tar.gz
 .lwpcookies
-$self->{distro}-*
 cover_db
+pod2htm*.tmp
+$self->{distro}-*
 HERE
 }
 
@@ -1193,7 +1232,7 @@ sub _module_license {
     my $year          = $self->_thisyear();
 
     my $content = qq[
-\=head1 COPYRIGHT & LICENSE
+\=head1 LICENSE AND COPYRIGHT
 
 Copyright $year $self->{author}.
 
@@ -1233,7 +1272,7 @@ Perhaps a little code snippet.
 A list of functions that can be exported.  You can delete this section
 if you don't export anything, such as for a purely object-oriented module.
 
-\=head1 FUNCTIONS
+\=head1 SUBROUTINES/METHODS
 
 \=head2 function1
 
@@ -1267,4 +1306,7 @@ $license
 HERE
     return $content;
 }
+
 1;
+
+# vi:et:sw=4 ts=4
