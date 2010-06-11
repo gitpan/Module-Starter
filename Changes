@@ -1,5 +1,28 @@
 Revision history for Perl extension Module::Starter
 
+1.54_01 Fri Jun 11 16:56:00 2010
+
+        Special thanks goes to Andy Lester, who has been, still is and
+            will remain an inspiration to many programmers, myself included.
+
+        [ENHANCEMENTS]
+        Added hooks for distribution building in App. Thanks to Brian D. Foy.
+        MANIFEST is now created via the proper builder.
+        Kept create_MANIFEST to act as hook.
+        Added Apache license by pfig.
+
+        * [RT #53539] Refactoring, adding hooks, described above.
+        (Patch provided by brian d. foy)
+
+        * [RT #27304] Minimal version of perl (5.006)
+        (Patch provided by Alexandr Ciornii)
+
+        * [RT #53339] ::Simple uses the builder to create the MANIFEST
+
+        * Moved repository to Github
+
+        * Some more refactoring in Simple::create_builder()
+
 1.54    Tue Dec  8 09:11:00 CST 2009
 
         This release could not have happened without Sawyer X.

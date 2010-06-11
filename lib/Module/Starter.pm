@@ -10,11 +10,11 @@ Module::Starter - a simple starter kit for any module
 
 =head1 VERSION
 
-version 1.54
+version 1.54_01
 
 =cut
 
-our $VERSION = '1.54';
+our $VERSION = '1.54_01';
 
 =head1 SYNOPSIS
 
@@ -111,6 +111,8 @@ sub import {
 
 =head1 AUTHORS
 
+Sawyer X, C<< <xsawyerx at cpan.org> >>
+
 Andy Lester, C<< <petdance at cpan.org> >>
 
 Ricardo Signes, C<< <rjbs at cpan.org> >>
@@ -160,6 +162,8 @@ notified of progress on your bug as I make changes.
 
 Copyright 2005-2009 Andy Lester, Ricardo Signes and C.J. Adams-Collier,
 All Rights Reserved.
+
+Copyright 2010 Sawyer X, All Rights Reserved.
 
 This program is free software; you can redistribute it and/or modify it
 under the same terms as Perl itself.

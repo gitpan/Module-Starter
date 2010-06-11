@@ -1,8 +1,10 @@
 package Module::Starter::Simple;
 
+use 5.006;
 use strict;
 use warnings;
 
+use Cwd 'cwd';
 use ExtUtils::Command qw( rm_rf mkpath touch );
 use File::Spec ();
 use Carp qw( carp confess croak );
@@ -15,11 +17,11 @@ Module::Starter::Simple - a simple, comprehensive Module::Starter plugin
 
 =head1 VERSION
 
-Version 1.54
+Version 1.54_01
 
 =cut
 
-our $VERSION = '1.54';
+our $VERSION = '1.54_01';
 
 =head1 SYNOPSIS
 
@@ -36,6 +38,42 @@ the directories with the required files.
 
 =head1 CLASS METHODS
 
+=head2 C<< new(%args) >>
+
+This method is called to construct and initialize a new Module::Starter object.
+It is never called by the end user, only internally by C<create_distro>, which
+creates ephemeral Module::Starter objects.  It's documented only to call it to
+the attention of subclass authors.
+
+=cut
+
+sub new {
+    my $class = shift;
+    return bless { @_ } => $class;
+}
+
+=head1 OBJECT METHODS
+
+All the methods documented below are object methods, meant to be called
+internally by the ephemperal objects created during the execution of the class
+method C<create_distro> above.
+
+=head2 postprocess_config
+
+A hook to do any work after the configuration is initially processed.
+
+=cut
+
+sub postprocess_config { 1 };
+
+=head2 pre_create_distro
+
+A hook to do any work right before the distro is created.
+
+=cut
+
+sub pre_create_distro { 1 };
+
 =head2 C<< create_distro(%args) >>
 
 This method works as advertised in L<Module::Starter>.
@@ -43,10 +81,11 @@ This method works as advertised in L<Module::Starter>.
 =cut
 
 sub create_distro {
-    my $class = shift;
+    my $either = shift;
 
-    my $self = $class->new( @_ );
+    ( ref $either ) or $either = $either->new( @_ );
 
+    my $self    = $either;
     my $modules = $self->{modules} || [];
     my @modules = map { split /,/ } @{$modules};
     croak "No modules specified.\n" unless @modules;
@@ -80,31 +119,31 @@ sub create_distro {
 
     push @files, $self->create_Changes;
     push @files, $self->create_README( $build_results{instructions} );
-    push @files, 'MANIFEST';
-    $self->create_MANIFEST( grep { $_ ne 't/boilerplate.t' } @files );
+
+    $self->create_MANIFEST( $build_results{'manifest_method'} );
+    # TODO: put files to ignore in a more standard form?
+    # XXX: no need to return the files created
 
     return;
 }
 
-=head2 C<< new(%args) >>
+=head2 post_create_distro
 
-This method is called to construct and initialize a new Module::Starter object.
-It is never called by the end user, only internally by C<create_distro>, which
-creates ephemeral Module::Starter objects.  It's documented only to call it to
-the attention of subclass authors.
+A hook to do any work after creating the distribution.
 
 =cut
 
-sub new {
-    my $class = shift;
-    return bless { @_ } => $class;
+sub post_create_distro { 1 };
+
+=head2 pre_exit
+
+A hook to do any work right before exit time.
+
+=cut
+
+sub pre_exit {
+     print "Created starter directories and files\n";
 }
-
-=head1 OBJECT METHODS
-
-All the methods documented below are object methods, meant to be called
-internally by the ephemperal objects created during the execution of the class
-method C<create_distro> above.
 
 =head2 create_basedir
 
@@ -289,6 +328,22 @@ Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
 02111-1307 USA.
 EOT
     },
+    {
+        license => 'apache',
+        blurb => <<'EOT',
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    L<http://www.apache.org/licenses/LICENSE-2.0>
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+EOT
+    },
     ];
 }
 
@@ -371,7 +426,7 @@ sub _module_to_pm_file {
 sub _reference_links {
   return (
       { nickname => 'RT',
-        title    => 'CPAN\'s request tracker',
+        title    => 'CPAN\'s request tracker (report bugs here)',
         link     => 'http://rt.cpan.org/NoAuth/Bugs.html?Dist=%s',
       },
       { nickname => 'AnnoCPAN',
@@ -459,6 +514,7 @@ sub Makefile_PL_guts {
     (my $author = "$self->{author} <$self->{email}>") =~ s/'/\'/g;
 
     return <<"HERE";
+use 5.006;
 use strict;
 use warnings;
 use ExtUtils::MakeMaker;
@@ -560,6 +616,7 @@ sub Build_PL_guts {
     (my $author = "$self->{author} <$self->{email}>") =~ s/'/\'/g;
 
     return <<"HERE";
+use 5.006;
 use strict;
 use warnings;
 use Module::Build;
@@ -571,6 +628,9 @@ my \$builder = Module::Build->new(
     dist_version_from   => '$main_pm_file',
     build_requires => {
         'Test::More' => 0,
+    },
+    requires => {
+        'perl' => 5.006,
     },
     add_to_cleanup      => [ '$self->{distro}-*' ],
     create_makefile_pl => 'traditional',
@@ -811,7 +871,7 @@ HERE
     my $nmodules = @modules;
     my $main_module = $modules[0];
     my $use_lines = join(
-        "\n", map { qq{    use_ok( '$_' ) || print "Bail out!\n";} } @modules
+        "\n", map { qq{    use_ok( '$_' ) || print "Bail out!\\n";} } @modules
     );
 
     $t_files{'00-load.t'} = <<"HERE";
@@ -834,6 +894,7 @@ HERE
     $t_files{'boilerplate.t'} = <<"HERE";
 #!perl -T
 
+use 5.006;
 use strict;
 use warnings;
 use Test::More tests => $boilerplate_tests;
@@ -911,37 +972,102 @@ sub _create_t {
     return "t/$filename";
 }
 
-=head2 create_MANIFEST( @files )
+=head2 create_MB_MANIFEST
+
+This methods creates a MANIFEST file using Module::Build's methods.
+
+=cut
+
+sub create_MB_MANIFEST {
+    my $self = shift;
+    $self->create_EUMM_MANIFEST;
+}
+
+=head2 create_MI_MANIFEST
+
+This method creates a MANIFEST file using Module::Install's methods.
+
+Currently runs ExtUtils::MakeMaker's methods.
+
+=cut
+
+sub create_MI_MANIFEST {
+    my $self = shift;
+    $self->create_EUMM_MANIFEST;
+}
+
+=head2 create_EUMM_MANIFEST
+
+This method creates a MANIFEST file using ExtUtils::MakeMaker's methods.
+
+=cut
+
+sub create_EUMM_MANIFEST {
+    my $self     = shift;
+    my $orig_dir = cwd();
+
+    # create the MANIFEST in the correct path
+    chdir $self->{'basedir'} || die "Can't reach basedir: $!\n";
+
+    require ExtUtils::Manifest;
+    $ExtUtils::Manifest::Quiet = 0;
+    ExtUtils::Manifest::mkmanifest();
+
+    # return to our original path, wherever it was
+    chdir $orig_dir || die "Can't return to original dir: $!\n";
+}
+
+=head2 create_MANIFEST( $method )
 
 This method creates the distribution's MANIFEST file.  It must be run last,
 because all the other create_* functions have been returning the functions they
 create.
 
+It receives a method to run in order to create the MANIFEST file. That way it
+can create a MANIFEST file according to the builder used.
+
 =cut
 
 sub create_MANIFEST {
-    my $self = shift;
-    my @files = @_;
-
+    my ( $self, $manifest_method ) = @_;
     my $fname = File::Spec->catfile( $self->{basedir}, 'MANIFEST' );
-    $self->create_file( $fname, $self->MANIFEST_guts(@files) );
+
+    $self->$manifest_method();
+    $self->filter_lines_in_file(
+        $fname,
+        qr/^t\/boilerplate\.t$/,
+        qr/^ignore\.txt$/,
+    );
+
     $self->progress( "Created $fname" );
 
     return 'MANIFEST';
 }
 
-=head2 MANIFEST_guts( @files )
+=head2 get_builders( )
 
-This method is called by C<create_MANIFEST>, and returns content for the
-MANIFEST file.
+This methods gets the correct builder(s).
+
+It is called by C<create_build>, and returns an arrayref with the builders.
 
 =cut
 
-sub MANIFEST_guts {
+sub get_builders {
     my $self = shift;
-    my @files = sort @_;
 
-    return join( "\n", @files, '' );
+    # pass one: pull the builders out of $self->{builder}
+    my @tmp =
+        ref $self->{'builder'} eq 'ARRAY' ? @{ $self->{'builder'} }
+                                          : $self->{'builder'};
+
+    my @builders;
+    my $COMMA = q{,};
+    # pass two: expand comma-delimited builder lists
+    foreach my $builder (@tmp) {
+        push( @builders, split( $COMMA, $builder ) );
+    }
+
+    return \@builders;
 }
 
 =head2 create_build( )
@@ -958,17 +1084,8 @@ Module::Install
 sub create_build {
     my $self = shift;
 
-    # pass one: pull the builders out of $self->{builder}
-    my @tmp =
-    ref $self->{builder} eq 'ARRAY' ? @{$self->{builder}} : $self->{builder};
-
-    my @builders;
-    my $COMMA = q{,};
-    # pass two: expand comma-delimited builder lists
-    foreach my $builder (@tmp) {
-        push( @builders, split($COMMA, $builder) );
-    }
-
+    # get the builders
+    my @builders    = @{ $self->get_builders };
     my $builder_set = Module::Starter::BuilderSet->new();
 
     # Remove mutually exclusive and unsupported builders
@@ -979,6 +1096,7 @@ sub create_build {
 
     my @build_instructions;
     my @files;
+    my $manifest_method;
 
     foreach my $builder ( @builders ) {
         if ( !@build_instructions ) {
@@ -997,12 +1115,15 @@ sub create_build {
         push( @build_instructions, join("\n", map { "\t$_" } @commands) );
 
         my $build_method = $builder_set->method_for_builder($builder);
-        $self->$build_method($self->{main_module})
+        $self->$build_method($self->{main_module});
+
+        $manifest_method = $builder_set->manifest_method($builder);
     }
 
     return(
-        files        => [ @files ],
-        instructions => join( "\n\n", @build_instructions ),
+        files           => [ @files ],
+        instructions    => join( "\n\n", @build_instructions ),
+        manifest_method => $manifest_method,
     );
 }
 
@@ -1111,6 +1232,39 @@ sub progress {
     return;
 }
 
+=head2 filter_lines_in_file( $filename, @compiled_regexes )
+
+C<filter_lines_in_file> goes over a file and removes lines with the received
+regexes.
+
+For example, removing t/boilerplate.t in the MANIFEST.
+
+=cut
+
+sub filter_lines_in_file {
+    my ( $self, $file, @regexes ) = @_;
+    my @read_lines;
+    open my $fh, '<', $file or die "Can't open file $file: $!\n";
+    @read_lines = <$fh>;
+    close $fh or die "Can't close file $file: $!\n";
+
+    chomp @read_lines;
+
+    open $fh, '>', $file or die "Can't open file $file: $!\n";
+    foreach my $line (@read_lines) {
+        my $found;
+
+        foreach my $regex (@regexes) {
+            if ( $line =~ $regex ) {
+                $found++;
+            }
+        }
+
+        $found or print {$fh} "$line\n";
+    }
+    close $fh or die "Can't close file $file: $!\n";
+}
+
 =head1 BUGS
 
 Please report any bugs or feature requests to
@@ -1120,13 +1274,17 @@ be notified of progress on your bug as I make changes.
 
 =head1 AUTHOR
 
+Sawyer X, C<< <xsawyerx@cpan.org> >>
+
 Andy Lester, C<< <andy@petdance.com> >>
 
 C.J. Adams-Collier, C<< <cjac@colliertech.org> >>
 
 =head1 Copyright & License
 
-Copyright 2005-2007 Andy Lester and C.J. Adams-Collier, All Rights Reserved.
+Copyright 2005-2009 Andy Lester and C.J. Adams-Collier, All Rights Reserved.
+
+Copyright 2010 Sawyer X, All Rights Reserved.
 
 This program is free software; you can redistribute it and/or modify it
 under the same terms as Perl itself.
@@ -1143,8 +1301,9 @@ sub _module_header {
     my $content = <<"HERE";
 package $module;
 
-use warnings;
+use 5.006;
 use strict;
+use warnings;
 
 \=head1 NAME
 
