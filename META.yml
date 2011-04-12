@@ -1,6 +1,6 @@
 --- #YAML:1.0
 name:               Module-Starter
-version:            1.56
+version:            1.57
 abstract:           a simple starter kit for any module
 author:
     - Andy Lester <andy@petdance.com>
