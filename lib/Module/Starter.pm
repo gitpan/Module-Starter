@@ -10,11 +10,11 @@ Module::Starter - a simple starter kit for any module
 
 =head1 VERSION
 
-Version 1.57
+Version 1.58
 
 =cut
 
-our $VERSION = '1.57';
+our $VERSION = '1.58';
 
 =head1 SYNOPSIS
 
@@ -61,7 +61,7 @@ It takes a hash of params, as follows:
     verbose      => $verbose,  # bool: print progress messages; defaults to 0
     force        => $force     # bool: overwrite existing files; defaults to 0
 
-The ignores_type is a new feature that allows to create SCM-specific ignore files.
+The ignores_type is a new feature that allows one to create SCM-specific ignore files.
 These are the mappings:
 
     ignores_type => 'generic'  # default, creates 'ignore.txt'

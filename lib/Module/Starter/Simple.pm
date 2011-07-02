@@ -17,11 +17,11 @@ Module::Starter::Simple - a simple, comprehensive Module::Starter plugin
 
 =head1 VERSION
 
-Version 1.57
+Version 1.58
 
 =cut
 
-our $VERSION = '1.57';
+our $VERSION = '1.58';
 
 =head1 SYNOPSIS
 
@@ -55,7 +55,7 @@ sub new {
 =head1 OBJECT METHODS
 
 All the methods documented below are object methods, meant to be called
-internally by the ephemperal objects created during the execution of the class
+internally by the ephemeral objects created during the execution of the class
 method C<create_distro> above.
 
 =head2 postprocess_config

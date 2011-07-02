@@ -1,6 +1,6 @@
 --- #YAML:1.0
 name:               Module-Starter
-version:            1.57
+version:            1.58
 abstract:           a simple starter kit for any module
 author:
     - Andy Lester <andy@petdance.com>
@@ -14,6 +14,7 @@ requires:
     ExtUtils::Command:  0
     File::Spec:         0
     Getopt::Long:       0
+    Path::Class:        0
     Pod::Usage:         1.21
     Test::Harness:      0.21
     Test::More:         0
