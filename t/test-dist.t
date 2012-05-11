@@ -18,7 +18,7 @@ use File::Basename;
 sub new {
     my $class = shift;
     my $self  = shift;
-    $self //= {};
+    $self ||= {};
     $self->{_orig_vars} = { %$self };
 
     bless $self, $class;
@@ -846,6 +846,7 @@ inc/
 .last_cover_stats
 nytprof.out
 pod2htm*.tmp
+pm_to_blib
 $distro-*
 $distro-*.tar.gz
 EOF
@@ -1332,7 +1333,7 @@ run_settest('MyModule-Test', {
     distro  => 'MyModule-Test',
     modules => ['MyModule::Test', 'MyModule::Test::App'],
     builder => 'Module::Build',
-    license => 'perl',
+    license => 'artistic2',
     author  => 'Baruch Spinoza',
     email   => 'spinoza@philosophers.tld',
     verbose => 0,
@@ -1348,7 +1349,7 @@ run_settest('Book-Park-Mansfield', {
         'JAUSTEN::Utils',
     ],
     builder => 'Module::Build',
-    license => 'perl',
+    license => 'artistic2',
     author  => 'Jane Austen',
     email   => 'jane.austen@writers.tld',
     verbose => 0,

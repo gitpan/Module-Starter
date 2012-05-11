@@ -21,7 +21,7 @@ Version 1.58
 
 =cut
 
-our $VERSION = '1.58_02';
+our $VERSION = '1.58_03';
 
 =head1 SYNOPSIS
 
@@ -97,7 +97,7 @@ sub create_distro {
     croak "Must specify an email address\n" unless $self->{email};
     ($self->{email_obfuscated} = $self->{email}) =~ s/@/ at /;
 
-    $self->{license}      ||= 'perl';
+    $self->{license}      ||= 'artistic2';
     $self->{minperl}      ||= 5.006;
     $self->{ignores_type} ||= ['generic'];
     $self->{manifest_skip} = !! grep { /manifest/ } @{ $self->{ignores_type} };
@@ -1452,6 +1452,7 @@ inc/
 .last_cover_stats
 nytprof.out
 pod2htm*.tmp
+pm_to_blib
 $self->{distro}-*
 $self->{distro}-*.tar.gz
 EOF

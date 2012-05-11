@@ -4,7 +4,7 @@
       "Andy Lester <andy@petdance.com>"
    ],
    "dynamic_config" : 1,
-   "generated_by" : "ExtUtils::MakeMaker version 6.62, CPAN::Meta::Converter version 2.112150",
+   "generated_by" : "ExtUtils::MakeMaker version 6.62, CPAN::Meta::Converter version 2.120921",
    "license" : [
       "perl_5"
    ],
@@ -22,23 +22,24 @@
    "prereqs" : {
       "build" : {
          "requires" : {
-            "ExtUtils::MakeMaker" : 0
+            "ExtUtils::MakeMaker" : "0"
          }
       },
       "configure" : {
          "requires" : {
-            "ExtUtils::MakeMaker" : 0
+            "ExtUtils::MakeMaker" : "0"
          }
       },
       "runtime" : {
          "requires" : {
-            "ExtUtils::Command" : 0,
-            "File::Spec" : 0,
-            "Getopt::Long" : 0,
-            "Path::Class" : 0,
+            "ExtUtils::Command" : "0",
+            "File::Spec" : "0",
+            "Getopt::Long" : "0",
+            "Path::Class" : "0",
             "Pod::Usage" : "1.21",
             "Test::Harness" : "0.21",
-            "Test::More" : 0
+            "Test::More" : "0",
+            "parent" : "0"
          }
       }
    },
@@ -52,5 +53,5 @@
          "url" : "https://github.com/xsawyerx/module-starter.git"
       }
    },
-   "version" : "1.58_02"
+   "version" : "1.58_03"
 }
