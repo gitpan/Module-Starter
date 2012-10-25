@@ -17,11 +17,11 @@ Module::Starter::Simple - a simple, comprehensive Module::Starter plugin
 
 =head1 VERSION
 
-Version 1.59
+Version 1.60
 
 =cut
 
-our $VERSION = '1.59';
+our $VERSION = '1.60';
 
 =head1 SYNOPSIS
 
@@ -91,6 +91,14 @@ sub create_distro {
     croak "No modules specified.\n" unless @modules;
     for (@modules) {
         croak "Invalid module name: $_" unless /\A[a-z_]\w*(?:::[\w]+)*\Z/i;
+    }
+
+    if ( not $self->{author} ) {
+        ( $self->{author} ) = split /,/, ( getpwuid $> )[6];
+    }
+
+    if ( not $self->{email} and exists $ENV{EMAIL} ) {
+        $self->{email} = $ENV{EMAIL};
     }
 
     croak "Must specify an author\n" unless $self->{author};

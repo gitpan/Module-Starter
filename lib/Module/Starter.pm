@@ -10,11 +10,11 @@ Module::Starter - a simple starter kit for any module
 
 =head1 VERSION
 
-Version 1.59
+Version 1.60
 
 =cut
 
-our $VERSION = '1.59';
+our $VERSION = '1.60';
 
 =head1 SYNOPSIS
 
@@ -54,8 +54,8 @@ It takes a hash of params, as follows:
                                       # arrayref
 
     license      => $license,  # type of license; defaults to 'perl'
-    author       => $author,   # author's full name (required)
-    email        => $email,    # author's email address (required)
+    author       => $author,   # author's full name (taken from C<getpwuid> if not provided)
+    email        => $email,    # author's email address (taken from C<EMAIL> if not provided)
     ignores_type => $type,     # ignores file type ('generic', 'cvs', 'git', 'manifest' )
 
     verbose      => $verbose,  # bool: print progress messages; defaults to 0
