@@ -17,11 +17,11 @@ Module::Starter::Simple - a simple, comprehensive Module::Starter plugin
 
 =head1 VERSION
 
-Version 1.60
+Version 1.61
 
 =cut
 
-our $VERSION = '1.60';
+our $VERSION = '1.61';
 
 =head1 SYNOPSIS
 
@@ -93,7 +93,7 @@ sub create_distro {
         croak "Invalid module name: $_" unless /\A[a-z_]\w*(?:::[\w]+)*\Z/i;
     }
 
-    if ( not $self->{author} ) {
+    if ( ( not $self->{author} ) && ( $^O ne 'MSWin32' ) ) {
         ( $self->{author} ) = split /,/, ( getpwuid $> )[6];
     }
 
