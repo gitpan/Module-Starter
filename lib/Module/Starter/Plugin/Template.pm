@@ -10,11 +10,11 @@ Module::Starter::Plugin::Template - module starter with templates
 
 =head1 VERSION
 
-Version 1.61
+Version 1.62
 
 =cut
 
-our $VERSION = '1.61';
+our $VERSION = '1.62';
 
 =head1 SYNOPSIS
 
@@ -30,7 +30,7 @@ our $VERSION = '1.61';
 This plugin is designed to be added to a Module::Starter::Simple-compatible
 Module::Starter class.  It adds stub methods for template retrieval and
 rendering, and it replaces all of Simple's _guts methods with methods that will
-retrieve and render the apropriate templates.
+retrieve and render the appropriate templates.
 
 =head1 CLASS METHODS
 
@@ -217,7 +217,7 @@ sub MANIFEST_guts {
     $self->render($template, \%options);
 }
 
-=item item ignores_guts
+=item ignores_guts
 
 =cut
 

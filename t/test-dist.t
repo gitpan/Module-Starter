@@ -359,7 +359,7 @@ GNU General Public License for more details.
 
 A copy of the GNU General Public License is available in the source tree;
 if not, write to the Free Software Foundation, Inc.,
-59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
+51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
 EOT
     },
     lgpl => {
@@ -379,8 +379,8 @@ Lesser General Public License for more details.
 
 You should have received a copy of the GNU Lesser General Public
 License along with this program; if not, write to the Free
-Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
-02111-1307 USA.
+Software Foundation, Inc.,
+51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
 EOT
     },
     gpl3 => {
@@ -629,7 +629,7 @@ sub parse_file_start {
         );
 
         $self->parse(
-            qr/\A\s*requires => \{\n *\Q#'ABC'\E *\Q=> 1.6,\E\n *\Q#'Foo::Bar::Module' => 5.0401,\E\n\s*\},\n/ms,
+            qr/\A\s*requires => \{\n *#'ABC' *=> 1.6,\n *#'Foo::Bar::Module' => 5.0401,\n\s*\},\n/ms,
             "Requires",
         );
 
@@ -688,7 +688,7 @@ sub parse_file_start {
         );
 
         $self->parse(
-            qr/\A\s*PREREQ_PM => \{\n *\Q#'ABC'\E *\Q=> 1.6,\E\n *\Q#'Foo::Bar::Module' => 5.0401,\E\n\s*\},\n/ms,
+            qr/\A\s*PREREQ_PM => \{\n *#'ABC' *=> 1.6,\n *#'Foo::Bar::Module' => 5.0401,\n\s*\},\n/ms,
             "PREREQ_PM",
         );
     }
@@ -744,7 +744,7 @@ EOT
         );
 
         $self->parse(
-            qr/\A\s*requires \(\n *\Q#'ABC'\E *\Q=> 1.6,\E\n *\Q#'Foo::Bar::Module' => 5.0401,\E\n\s*\);\n/ms,
+            qr/\A\s*requires \(\n *#'ABC' *=> 1.6,\n *#'Foo::Bar::Module' => 5.0401,\n\s*\);\n/ms,
             "requires",
         );
 

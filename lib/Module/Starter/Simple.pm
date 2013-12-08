@@ -17,11 +17,11 @@ Module::Starter::Simple - a simple, comprehensive Module::Starter plugin
 
 =head1 VERSION
 
-Version 1.61
+Version 1.62
 
 =cut
 
-our $VERSION = '1.61';
+our $VERSION = '1.62';
 
 =head1 SYNOPSIS
 
@@ -480,7 +480,7 @@ GNU General Public License for more details.
 
 A copy of the GNU General Public License is available in the source tree;
 if not, write to the Free Software Foundation, Inc.,
-59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
+51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
 EOT
     },
     lgpl => {
@@ -500,8 +500,8 @@ Lesser General Public License for more details.
 
 You should have received a copy of the GNU Lesser General Public
 License along with this program; if not, write to the Free
-Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
-02111-1307 USA.
+Software Foundation, Inc.,
+51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
 EOT
     },
     gpl3 => {
@@ -1464,7 +1464,7 @@ pm_to_blib
 $self->{distro}-*
 $self->{distro}-*.tar.gz
 EOF
-        # make this more restrictive, since MANIFEST tends to be less noticable
+        # make this more restrictive, since MANIFEST tends to be less noticeable
         # (also, manifest supports REs.)
         manifest => <<'EOF',
 # Top-level filter (only include the following...)
